@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>평면도</title>
+<style>
+  :root {
+    --ground:#F5F7F4; --surface:#FFFFFF; --surface-2:#ECF0EA; --line:#DCE2D9;
+    --ink:#161C19; --ink-2:#48534D; --ink-3:#7B867E;
+    --accent:#1F5F52; --accent-ink:#16443A; --accent-soft:#DBEBE4;
+    --font-sans:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,
+                'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+    --font-mono:ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#111614; --surface:#191F1C; --surface-2:#212824; --line:#2C3531;
+      --ink:#E8EDE8; --ink-2:#A5B0AA; --ink-3:#75817A;
+      --accent:#6FC3AC; --accent-ink:#9BD9C7; --accent-soft:#1C382F;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:#111614; --surface:#191F1C; --surface-2:#212824; --line:#2C3531;
+    --ink:#E8EDE8; --ink-2:#A5B0AA; --ink-3:#75817A;
+    --accent:#6FC3AC; --accent-ink:#9BD9C7; --accent-soft:#1C382F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px; line-height: 1.6;
+    margin: 0; padding: 0 16px 60px;
+    -webkit-font-smoothing: antialiased;
+    word-break: keep-all;
+  }
+
+  .wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+  header { padding-top: 36px; display: flex; flex-direction: column; gap: 8px; }
+  h1 { font-size: 26px; letter-spacing: -.02em; margin: 0; }
+  .sub { color: var(--ink-3); font-size: 14px; margin: 0; }
+
+  .nav { display: flex; flex-wrap: wrap; gap: 7px; }
+
+  .nav a {
+    font-size: 13px; text-decoration: none; white-space: nowrap;
+    color: var(--ink-2); background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+  }
+
+  .nav a:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+  .nav a.here { background: var(--accent); color: var(--surface); border-color: var(--accent); font-weight: 600; }
+
+  /* 도면은 인쇄물처럼 항상 흰 바탕 */
+  .sheet {
+    background: #FFFFFF;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+    overflow: auto;
+  }
+
+  .sheet img { width: 100%; height: auto; display: block; }
+
+  .zoomed .sheet img { width: auto; max-width: none; }
+
+  .tools { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+
+  .tools button {
+    font-family: var(--font-sans); font-size: 13px; cursor: pointer;
+    color: var(--ink-2); background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+  }
+
+  .tools button:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+  .tools .hint { font-size: 12.5px; color: var(--ink-3); }
+
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-3); }
+  .facts b { color: var(--ink-2); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <h1>평면도</h1>
+    <p class="sub">방 3 · 욕실 2 · 드레스룸 · 발코니 2</p>
+    <nav class="nav">
+      <a href="index.html">구매물품 · 금액</a>
+      <a href="check.html">구매 체크리스트</a>
+      <a href="plan.html" class="here">평면도</a>
+    </nav>
+  </header>
+
+  <div class="tools">
+    <button type="button" id="zoom">크게 보기</button>
+    <span class="hint" id="hint">화면 폭에 맞춰 표시 중</span>
+  </div>
+
+  <div class="sheet">
+    <img src="plan.png" alt="아파트 평면도 — 방 3, 욕실 2, 드레스룸, 발코니 2">
+  </div>
+
+  <p class="facts">
+    <span><b>타입</b> 81B1</span>
+    <span><b>공급</b> 81㎡ · 24평형</span>
+    <span><b>주방</b> ㄱ자형 · 가스레인지</span>
+    <span><b>안방</b> 드레스룸 + 전용 욕실 + 발코니</span>
+  </p>
+
+</div>
+
+<script>
+  const btn  = document.getElementById("zoom");
+  const hint = document.getElementById("hint");
+
+  btn.addEventListener("click", () => {
+    const on = document.body.classList.toggle("zoomed");
+    btn.textContent = on ? "화면에 맞추기" : "크게 보기";
+    hint.textContent = on ? "원본 크기 — 좌우로 밀어서 보기" : "화면 폭에 맞춰 표시 중";
+    if (!on) window.scrollTo({ top: 0 });
+  });
+</script>
+
+</body>
+</html>
