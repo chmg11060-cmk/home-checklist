@@ -318,12 +318,63 @@
 
   .row {
     display: grid;
-    grid-template-columns: 26px minmax(0, 1fr) auto;
-    grid-template-areas: "box name cost" ". spec cost";
+    grid-template-columns: 26px minmax(0, 1fr) auto auto;
+    grid-template-areas: "box name cost act" ". spec cost act";
     column-gap: 12px;
     align-items: start;
     padding: 13px 22px;
     cursor: pointer;
+  }
+
+  .r-act { grid-area: act; align-self: center; }
+
+  .editbtn {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--ink-3);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 4px 9px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .12s ease, background .12s ease, color .12s ease;
+  }
+
+  .editbtn:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+
+  @media (hover: hover) {
+    .editbtn { opacity: 0; }
+    .rowwrap:hover .editbtn, .editbtn:focus-visible { opacity: 1; }
+  }
+
+  .editform {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 0 22px 14px 60px;
+  }
+
+  .ef-name { flex: 2 1 190px; }
+  .ef-spec { flex: 3 1 240px; }
+  .ef-cost { flex: 0 1 120px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .ef-p    { flex: 0 1 130px; cursor: pointer; }
+
+  .ef-hint { font-size: 12px; color: var(--ink-3); }
+
+  .tag.ed { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+
+  .restorebtn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--warn);
+    background: var(--warn-soft);
+    border: 1px solid var(--warn);
+    border-radius: 8px;
+    padding: 7px 13px;
+    cursor: pointer;
+    margin-left: 8px;
   }
 
   /* ---------- 실측값 입력 ---------- */
@@ -430,11 +481,6 @@
     color: var(--accent);
     font-weight: 700;
     margin-right: 2px;
-  }
-
-  .cdel {
-    font-size: 12.5px;
-    padding: 5px 11px;
   }
 
   @media (max-width: 620px) {
@@ -979,61 +1025,112 @@
       <div class="room-note">${esc(r.note)}</div>
     </div>`).join("");
 
-  document.getElementById("sections").innerHTML = SECTIONS.map((sec, si) => {
-    const secTotal = sec.items.filter(i => i.p === M).reduce((a, i) => a + i.cost, 0);
-    const rows = sec.items.map((it, ii) => {
-      const k = esc(it.name);
-      const measure = it.m ? `
+  /* ---------- 편집 상태 (두 사람 공유) ---------- */
+
+  let edits = {};            // { 원래이름: {name, spec, cost, p} }  기존 항목 수정분
+  let removed = new Set();   // 숨긴 기존 항목의 원래이름
+  let customItems = [];      // 직접 추가한 항목
+
+  /* 원본 + 수정분을 합쳐 실제로 보여줄 항목 */
+  function effective(base) {
+    const ov = edits[base.name] || {};
+    return {
+      key: base.name,                                   // 식별자는 항상 원래 이름
+      name: ov.name != null ? ov.name : base.name,
+      spec: ov.spec != null ? ov.spec : (base.spec || ""),
+      cost: ov.cost != null ? Number(ov.cost) : base.cost,
+      p:    ov.p    != null ? ov.p : base.p,
+      m: base.m, ph: base.ph, bi: base.bi,
+      edited: Object.keys(ov).length > 0
+    };
+  }
+
+  function rowHtml(it, opts) {
+    const k = esc(it.key);
+    const measure = it.m ? `
         <div class="measure">
           <input type="text" class="mfield" data-mkey="${k}" placeholder="${esc(it.ph || "측정값 입력")}" autocomplete="off">
           <button type="button" class="mbtn save" data-mkey="${k}">저장</button>
           <button type="button" class="mbtn del" data-mkey="${k}">삭제</button>
           <span class="msaved" data-mkey="${k}"></span>
         </div>` : "";
-      return `
-      <div class="rowwrap">
-        <label class="row">
-          <input type="checkbox" data-cost="${it.cost}" data-p="${it.p}" data-key="${k}" id="i${si}-${ii}">
+    return `
+      <div class="rowwrap${opts.custom ? " custom" : ""}" data-key="${k}">
+        <div class="row">
+          <input type="checkbox" data-cost="${Number(it.cost) || 0}" data-p="${it.p}" data-key="${opts.custom ? "c:" : ""}${k}">
           <span class="r-name">
             ${esc(it.name)}
             <span class="tag ${it.p}">${P_LABEL[it.p]}</span>
             ${it.bi ? '<span class="tag bi">빌트인 확인</span>' : ""}
+            ${it.edited ? '<span class="tag ed">수정됨</span>' : ""}
           </span>
           ${it.spec ? `<span class="r-spec">${esc(it.spec)}</span>` : ""}
-          <span class="r-cost">${it.cost ? fmt(it.cost) + " <small>만원</small>" : "<small>확인만</small>"}</span>
-        </label>
+          <span class="r-cost">${Number(it.cost) > 0 ? fmt(Number(it.cost)) + " <small>만원</small>" : "<small>" + (opts.custom ? "—" : "확인만") + "</small>"}</span>
+          <span class="r-act"><button type="button" class="editbtn" data-edit="${opts.custom ? "c:" : ""}${k}" title="수정·삭제">수정</button></span>
+        </div>
+        <div class="editslot"></div>
         ${measure}
       </div>`;
-    }).join("");
+  }
 
+  function editFormHtml(it, kind) {
     return `
-      <section class="section">
-        <div class="section-head">
-          <h2>${esc(sec.t)}</h2>
-          ${sec.n ? `<p class="sec-note">${esc(sec.n)}</p>` : '<p class="sec-note"></p>'}
-          <span class="sec-sum" id="ss-${si}">입주 전 ${fmt(secTotal)}만원</span>
-        </div>
-        <div class="rows">
-          ${rows}
-          <div class="customrows" data-sec="${si}"></div>
-          <div class="addwrap">
-            <button type="button" class="addbtn" data-sec="${si}">＋ 항목 추가</button>
-            <div class="addform" data-sec="${si}" hidden>
-              <input type="text" class="af af-name" placeholder="품목명 (예: 스탠드 조명)" autocomplete="off">
-              <input type="text" class="af af-spec" placeholder="설명·메모 (선택)" autocomplete="off">
-              <input type="text" class="af af-cost" inputmode="numeric" placeholder="금액(만원)" autocomplete="off">
-              <select class="af af-p">
-                <option value="must">입주 전</option>
-                <option value="rec">1~3개월</option>
-                <option value="opt" selected>나중에</option>
-              </select>
-              <button type="button" class="mbtn save af-add" data-sec="${si}">추가</button>
-              <button type="button" class="mbtn af-cancel" data-sec="${si}">취소</button>
+      <div class="editform">
+        <input type="text" class="af ef-name" value="${esc(it.name)}" placeholder="품목명" autocomplete="off">
+        <input type="text" class="af ef-spec" value="${esc(it.spec || "")}" placeholder="설명·메모" autocomplete="off">
+        <input type="text" class="af ef-cost" value="${Number(it.cost) > 0 ? it.cost : ""}" inputmode="numeric" placeholder="금액(만원)" autocomplete="off">
+        <select class="af ef-p">
+          <option value="must"${it.p === "must" ? " selected" : ""}>입주 전</option>
+          <option value="rec"${it.p === "rec" ? " selected" : ""}>1~3개월</option>
+          <option value="opt"${it.p === "opt" ? " selected" : ""}>나중에</option>
+        </select>
+        <button type="button" class="mbtn save ef-save">저장</button>
+        <button type="button" class="mbtn ef-cancel">취소</button>
+        <button type="button" class="mbtn del ef-del">삭제</button>
+        ${kind === "base" ? '<span class="ef-hint">삭제해도 아래 「되돌리기」로 복구 가능</span>' : ""}
+      </div>`;
+  }
+
+  function renderSections() {
+    document.getElementById("sections").innerHTML = SECTIONS.map((sec, si) => {
+      const rows = sec.items
+        .map(effective)
+        .filter(it => !removed.has(it.key))
+        .map(it => rowHtml(it, { custom: false }))
+        .join("");
+
+      const hidden = sec.items.filter(i => removed.has(i.name)).length;
+
+      return `
+        <section class="section">
+          <div class="section-head">
+            <h2>${esc(sec.t)}</h2>
+            ${sec.n ? `<p class="sec-note">${esc(sec.n)}</p>` : '<p class="sec-note"></p>'}
+            <span class="sec-sum" id="ss-${si}"></span>
+          </div>
+          <div class="rows">
+            ${rows}
+            <div class="customrows" data-sec="${si}"></div>
+            <div class="addwrap">
+              <button type="button" class="addbtn" data-sec="${si}">＋ 항목 추가</button>
+              ${hidden ? `<button type="button" class="restorebtn" data-sec="${si}">삭제한 항목 ${hidden}개 되돌리기</button>` : ""}
+              <div class="addform" data-sec="${si}" hidden>
+                <input type="text" class="af af-name" placeholder="품목명 (예: 스탠드 조명)" autocomplete="off">
+                <input type="text" class="af af-spec" placeholder="설명·메모 (선택)" autocomplete="off">
+                <input type="text" class="af af-cost" inputmode="numeric" placeholder="금액(만원)" autocomplete="off">
+                <select class="af af-p">
+                  <option value="must">입주 전</option>
+                  <option value="rec">1~3개월</option>
+                  <option value="opt" selected>나중에</option>
+                </select>
+                <button type="button" class="mbtn save af-add" data-sec="${si}">추가</button>
+                <button type="button" class="mbtn af-cancel" data-sec="${si}">취소</button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>`;
-  }).join("");
+        </section>`;
+    }).join("");
+  }
 
   document.getElementById("timeline").innerHTML = TIMELINE.map(s => `
     <div class="tl-step">
@@ -1047,8 +1144,6 @@
 
   const totalEl = document.getElementById("total");
   const countEl = document.getElementById("count");
-
-  let customItems = [];   // 사용자가 추가한 항목 (두 사람 공유)
 
   const getBoxes = () => Array.from(document.querySelectorAll('.row input[type="checkbox"]'));
 
@@ -1065,38 +1160,38 @@
     SECTIONS.forEach((sec, si) => {
       const el = document.getElementById("ss-" + si);
       if (!el) return;
-      let s = sec.items.filter(i => i.p === M).reduce((a, i) => a + i.cost, 0);
+      let s = sec.items.map(effective).filter(i => !removed.has(i.key) && i.p === "must")
+                       .reduce((a, i) => a + (Number(i.cost) || 0), 0);
       s += customItems.filter(c => c.sec === si && c.p === "must")
                       .reduce((a, c) => a + (Number(c.cost) || 0), 0);
-      el.textContent = "입주 전 " + fmt(s) + "만원";
-      el.style.visibility = s > 0 ? "visible" : "hidden";
+      el.textContent = s > 0 ? "입주 전 " + fmt(s) + "만원" : "";
     });
-  }
-
-  function customRow(c) {
-    return `
-      <div class="rowwrap custom">
-        <label class="row">
-          <input type="checkbox" data-cost="${Number(c.cost) || 0}" data-p="${c.p}" data-key="c:${esc(c.id)}">
-          <span class="r-name">
-            ${esc(c.name)}
-            <span class="tag ${c.p}">${P_LABEL[c.p]}</span>
-          </span>
-          ${c.spec ? `<span class="r-spec">${esc(c.spec)}</span>` : ""}
-          <span class="r-cost">${Number(c.cost) > 0 ? fmt(Number(c.cost)) + " <small>만원</small>" : "<small>—</small>"}</span>
-        </label>
-        <div class="measure">
-          <button type="button" class="mbtn del cdel" data-cid="${esc(c.id)}">이 항목 삭제</button>
-        </div>
-      </div>`;
   }
 
   function renderCustom() {
     document.querySelectorAll(".customrows").forEach(box => {
       const si = Number(box.dataset.sec);
-      box.innerHTML = customItems.filter(c => c.sec === si).map(customRow).join("");
+      box.innerHTML = customItems
+        .filter(c => c.sec === si)
+        .map(c => rowHtml({ key: c.id, name: c.name, spec: c.spec, cost: c.cost, p: c.p }, { custom: true }))
+        .join("");
     });
   }
+
+  function renderAll() {
+    renderSections();
+    renderCustom();
+    updateSecSums();
+  }
+
+  /* 행 전체 클릭으로 체크 (버튼·입력칸 제외) */
+  document.addEventListener("click", e => {
+    if (e.target.closest("button, input, select, textarea, a, .editslot, .measure")) return;
+    const row = e.target.closest(".row");
+    if (!row) return;
+    const cb = row.querySelector('input[type="checkbox"]');
+    if (cb) { cb.checked = !cb.checked; recalc(); push(); }
+  });
 
   /* 체크박스는 동적으로 늘어나므로 위임 방식으로 처리 */
   document.addEventListener("change", e => {
@@ -1153,16 +1248,82 @@
       f.querySelectorAll("input.af").forEach(i => i.value = "");
       f.hidden = true;
       f.parentElement.querySelector(".addbtn").hidden = false;
-      renderCustom(); recalc(); updateSecSums(); push();
+      const keep = snapshot();
+      renderAll(); restoreChecked(keep); recalc(); push();
       return;
     }
 
-    const del = e.target.closest(".cdel");
-    if (del) {
-      customItems = customItems.filter(c => c.id !== del.dataset.cid);
-      renderCustom(); recalc(); updateSecSums(); push();
+    const restore = e.target.closest(".restorebtn");
+    if (restore) {
+      const si = Number(restore.dataset.sec);
+      SECTIONS[si].items.forEach(i => removed.delete(i.name));
+      const keep = snapshot();
+      renderAll(); restoreChecked(keep); recalc(); push();
+      return;
+    }
+
+    /* 수정 버튼 → 인라인 편집 폼 열기 */
+    const ed = e.target.closest(".editbtn");
+    if (ed) {
+      document.querySelectorAll(".editslot").forEach(s => s.innerHTML = "");
+      const raw = ed.dataset.edit;
+      const isCustom = raw.startsWith("c:");
+      const key = isCustom ? raw.slice(2) : raw;
+      const it = isCustom
+        ? customItems.find(c => c.id === key)
+        : effective(SECTIONS.flatMap(s => s.items).find(i => i.name === key));
+      if (!it) return;
+      const slot = ed.closest(".rowwrap").querySelector(".editslot");
+      slot.innerHTML = editFormHtml(it, isCustom ? "custom" : "base");
+      slot.dataset.key = raw;
+      slot.querySelector(".ef-name").focus();
+      return;
+    }
+
+    const cancel2 = e.target.closest(".ef-cancel");
+    if (cancel2) { cancel2.closest(".editslot").innerHTML = ""; return; }
+
+    const save2 = e.target.closest(".ef-save");
+    if (save2) {
+      const slot = save2.closest(".editslot");
+      const raw = slot.dataset.key;
+      const isCustom = raw.startsWith("c:");
+      const key = isCustom ? raw.slice(2) : raw;
+      const name = slot.querySelector(".ef-name").value.trim();
+      if (!name) { slot.querySelector(".ef-name").focus(); return; }
+      const costRaw = (slot.querySelector(".ef-cost").value || "").replace(/[^0-9]/g, "");
+      const patch = {
+        name: name,
+        spec: slot.querySelector(".ef-spec").value.trim(),
+        cost: costRaw === "" ? 0 : parseInt(costRaw, 10),
+        p: slot.querySelector(".ef-p").value
+      };
+      if (isCustom) {
+        const c = customItems.find(x => x.id === key);
+        if (c) Object.assign(c, patch);
+      } else {
+        edits[key] = patch;
+      }
+      const keep = snapshot();
+      renderAll(); restoreChecked(keep); recalc(); push();
+      return;
+    }
+
+    const del2 = e.target.closest(".ef-del");
+    if (del2) {
+      const slot = del2.closest(".editslot");
+      const raw = slot.dataset.key;
+      if (raw.startsWith("c:")) customItems = customItems.filter(c => c.id !== raw.slice(2));
+      else { removed.add(raw); delete edits[raw]; }
+      const keep = snapshot().filter(k => k !== raw);
+      renderAll(); restoreChecked(keep); recalc(); push();
     }
   });
+
+  function restoreChecked(keys) {
+    const on = new Set(keys);
+    getBoxes().forEach(b => { b.checked = on.has(b.dataset.key); });
+  }
 
   /* ---------- 두 사람 간 체크 상태 동기화 ---------- */
 
@@ -1194,7 +1355,7 @@
     statusEl.className = "syncstate " + (cls || "");
   }
 
-  const fields = Array.from(document.querySelectorAll(".mfield"));
+  const getFields = () => Array.from(document.querySelectorAll(".mfield"));
 
   function markField(f, saved) {
     f.classList.toggle("filled", !!saved && f.value.trim() !== "");
@@ -1206,13 +1367,19 @@
     suppress = true;
 
     customItems = Array.isArray(state.custom) ? state.custom : [];
-    renderCustom();
+    edits   = (state.edits && typeof state.edits === "object") ? state.edits : {};
+    removed = new Set(Array.isArray(state.removed) ? state.removed : []);
+
+    // 편집 폼을 열어둔 상태라면 화면을 다시 그리지 않음 (입력 중 내용 보호)
+    const editing = document.querySelector(".editform") ||
+                    document.querySelector(".addform:not([hidden])");
+    if (!editing) renderAll();
 
     const on = new Set(state.checked || []);
     getBoxes().forEach(b => { b.checked = on.has(b.dataset.key); });
 
     const vals = state.values || {};
-    fields.forEach(f => {
+    getFields().forEach(f => {
       if (document.activeElement === f) return;   // 입력 중인 칸은 건드리지 않음
       const v = vals[f.dataset.mkey];
       f.value = v == null ? "" : v;
@@ -1231,7 +1398,7 @@
 
   function snapshotValues() {
     const o = {};
-    fields.forEach(f => {
+    getFields().forEach(f => {
       if (f.dataset.saved === "1" && f.value.trim() !== "") o[f.dataset.mkey] = f.value.trim();
     });
     return o;
@@ -1296,6 +1463,8 @@
           checked: snapshot(),
           values: snapshotValues(),
           custom: customItems,
+          edits: edits,
+          removed: Array.from(removed),
           updatedAt: now,
           by: me
         })
@@ -1324,46 +1493,40 @@
 
   /* 실측값 저장 · 삭제 */
 
-  function fieldFor(key) {
-    return fields.find(f => f.dataset.mkey === key);
-  }
+  document.addEventListener("click", e => {
+    const btn = e.target.closest(".mbtn[data-mkey]");
+    if (!btn) return;
+    const f = getFields().find(x => x.dataset.mkey === btn.dataset.mkey);
+    if (!f) return;
 
-  document.querySelectorAll(".mbtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const f = fieldFor(btn.dataset.mkey);
-      if (!f) return;
-
-      if (btn.classList.contains("save")) {
-        if (f.value.trim() === "") { f.focus(); return; }
-        f.dataset.saved = "1";
-        markField(f, true);
-      } else {
-        f.value = "";
-        f.dataset.saved = "0";
-        markField(f, false);
-      }
-      push();
-    });
+    if (btn.classList.contains("save")) {
+      if (f.value.trim() === "") { f.focus(); return; }
+      f.dataset.saved = "1";
+      markField(f, true);
+    } else {
+      f.value = "";
+      f.dataset.saved = "0";
+      markField(f, false);
+    }
+    push();
   });
 
-  fields.forEach(f => {
-    f.dataset.saved = "0";
-    f.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const b = document.querySelector('.mbtn.save[data-mkey="' + CSS.escape(f.dataset.mkey) + '"]');
-        if (b) b.click();
-        f.blur();
-      }
-    });
-    f.addEventListener("input", () => {
-      if (f.dataset.saved === "1") { f.dataset.saved = "0"; markField(f, false); }
-    });
+  document.addEventListener("keydown", e => {
+    if (!e.target.matches(".mfield") || e.key !== "Enter") return;
+    e.preventDefault();
+    const b = document.querySelector('.mbtn.save[data-mkey="' + CSS.escape(e.target.dataset.mkey) + '"]');
+    if (b) b.click();
+    e.target.blur();
   });
 
+  document.addEventListener("input", e => {
+    if (!e.target.matches(".mfield")) return;
+    if (e.target.dataset.saved === "1") { e.target.dataset.saved = "0"; markField(e.target, false); }
+  });
+
+  renderAll();
   getBoxes().forEach(b => { b.checked = false; });
   recalc();
-  updateSecSums();
 
   pull(true);
   document.addEventListener("visibilitychange", () => {
