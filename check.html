@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>구매 체크리스트</title>
+<style>
+  :root {
+    --ground: #F5F7F4;
+    --surface: #FFFFFF;
+    --surface-2: #ECF0EA;
+    --line: #DCE2D9;
+    --line-soft: #E8EDE5;
+    --ink: #161C19;
+    --ink-2: #48534D;
+    --ink-3: #7B867E;
+    --accent: #1F5F52;
+    --accent-ink: #16443A;
+    --accent-soft: #DBEBE4;
+    --warn: #8A5A11;
+    --shadow: 0 1px 2px rgba(22,28,25,.05), 0 8px 24px -16px rgba(22,28,25,.28);
+    --font-sans: 'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,
+                 'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+    --font-mono: ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#111614; --surface:#191F1C; --surface-2:#212824; --line:#2C3531; --line-soft:#232B27;
+      --ink:#E8EDE8; --ink-2:#A5B0AA; --ink-3:#75817A;
+      --accent:#6FC3AC; --accent-ink:#9BD9C7; --accent-soft:#1C382F; --warn:#D6A251;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:#111614; --surface:#191F1C; --surface-2:#212824; --line:#2C3531; --line-soft:#232B27;
+    --ink:#E8EDE8; --ink-2:#A5B0AA; --ink-3:#75817A;
+    --accent:#6FC3AC; --accent-ink:#9BD9C7; --accent-soft:#1C382F; --warn:#D6A251;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 16px 80px;
+    -webkit-font-smoothing: antialiased;
+    word-break: keep-all;
+  }
+
+  .wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+
+  header { padding-top: 36px; display: flex; flex-direction: column; gap: 8px; }
+
+  h1 { font-size: 26px; letter-spacing: -.02em; margin: 0; }
+
+  .sub { color: var(--ink-3); font-size: 14px; margin: 0; }
+
+  /* 진행 바 */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: var(--shadow);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  }
+
+  .prog { display: flex; align-items: baseline; gap: 7px; margin-right: auto; }
+  .prog .n { font-family: var(--font-mono); font-size: 24px; font-weight: 600; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+  .prog .d { font-family: var(--font-mono); font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+  .track { flex: 1 1 100%; height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+  .fill { height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .25s ease; }
+
+  .sync { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+  .sync::before { content:""; display:inline-block; width:6px; height:6px; border-radius:50%; background: var(--ink-3); margin-right:5px; vertical-align:1px; }
+  .sync.ok { color: var(--accent); } .sync.ok::before { background: var(--accent); }
+  .sync.busy { color: var(--warn); } .sync.busy::before { background: var(--warn); }
+
+  a.back {
+    font-family: var(--font-sans); font-size: 13px; text-decoration: none;
+    color: var(--ink-2); background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; white-space: nowrap;
+  }
+  a.back:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+
+  .tog {
+    font-family: var(--font-sans); font-size: 13px; cursor: pointer;
+    color: var(--ink-2); background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; white-space: nowrap;
+  }
+  .tog:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+
+  /* 목록 */
+  .group { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+
+  .ghead {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex; align-items: baseline; gap: 10px;
+    font-size: 15px; font-weight: 700; letter-spacing: -.01em;
+  }
+
+  .ghead .cnt { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+  .item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 16px;
+    border-top: 1px solid var(--line-soft);
+    cursor: pointer;
+  }
+
+  .group .item:first-of-type { border-top: 0; }
+  .item:hover { background: var(--surface-2); }
+
+  .item input {
+    appearance: none; -webkit-appearance: none;
+    width: 20px; height: 20px; flex: none; margin: 0;
+    border: 1.5px solid var(--ink-3); border-radius: 6px;
+    background: var(--surface); cursor: pointer; position: relative;
+  }
+
+  .item input:checked { background: var(--accent); border-color: var(--accent); }
+
+  .item input:checked::after {
+    content: ""; position: absolute; left: 6px; top: 2px;
+    width: 4px; height: 10px;
+    border: solid var(--surface); border-width: 0 2px 2px 0;
+    transform: rotate(43deg);
+  }
+
+  .item input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .nm { font-size: 15.5px; font-weight: 500; letter-spacing: -.01em; }
+  .item input:checked ~ .nm { color: var(--ink-3); text-decoration: line-through; }
+
+  .empty { padding: 40px 16px; text-align: center; color: var(--ink-3); font-size: 14.5px; line-height: 1.7; }
+
+  body.hidedone .item.done { display: none; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <h1>구매 체크리스트</h1>
+    <p class="sub">구매물품 페이지에서 고른 항목만 표시. 사면 체크.</p>
+  </header>
+
+  <div class="bar">
+    <div class="prog">
+      <span class="n" id="done">0</span>
+      <span class="d" id="total">/ 0</span>
+    </div>
+    <span class="sync" id="sync">연결 중…</span>
+    <button class="tog" type="button" id="toggle">완료 숨기기</button>
+    <a class="back" href="index.html">← 금액 페이지</a>
+    <div class="track"><div class="fill" id="fill"></div></div>
+  </div>
+
+  <div id="list"></div>
+
+</div>
+
+<script>
+  const SECTIONS = [
+    {
+      t: "0. 실측할 치수",
+      n: "줄자 들고 한 번만 더 방문 → 잰 값을 칸에 적고 저장. 두 사람 모두에게 공유됨",
+      items: [
+        { name: "계약서상 전용면적(㎡)", spec: "가구 사이즈 판단 기준. 조감도 파일명 81B1 기준 공급 81㎡ = 24평형", cost: 0, p: M, m: 1, ph: "예) 59.97㎡" },
+        { name: "거실 짧은 벽 길이", spec: "이 값 −40cm = 소파 최대 폭", cost: 0, p: M, m: 1, ph: "예) 320cm → 소파 최대 280cm" },
+        { name: "세탁 발코니 폭", spec: "세탁기+건조기 나란히 놓을 수 있는지 판단. 안 되면 직렬 스택", cost: 0, p: M, m: 1, ph: "예) 145cm" },
+        { name: "냉장고 자리 폭·높이", spec: "LG 661L 양문형이 들어가는지 확인. 외형 폭은 매장 사양표에서 대조할 것", cost: 0, p: M, m: 1, ph: "예) 폭 950 × 높이 2000mm" },
+        { name: "안방 폭", spec: "퀸(150) / 킹(180) 판단. 침대 양옆 60cm 통로 확보 필요", cost: 0, p: M, m: 1, ph: "예) 340cm" },
+        { name: "거실·안방 창 치수", spec: "커튼 견적 기준. 우선 이 두 곳만", cost: 0, p: M, m: 1, ph: "예) 거실 300×230, 안방 180×230cm" },
+        { name: "작은방·주방 창 치수", spec: "커튼 2차분", cost: 0, p: R, m: 1, ph: "예) 작은방 150×130cm" },
+        { name: "기존 장·팬트리 내부 치수", spec: "수납 가능량 파악 → 추가 가구 필요 여부 결정", cost: 0, p: R, m: 1, ph: "예) 장 폭 90 × 깊이 55cm" }
+      ]
+    },
+    {
+      t: "1. 대형가전 · LG",
+      n: "LG 공식몰 회원할인가. 베스트샵 혼수 계약 시 추가 협의 여지 있음",
+      items: [
+        { name: "냉장고", spec: "LG 디오스 AI 오브제 S656P003 · 661L 양문형 · 최대혜택가 120.9만. 자리 폭 실측 후 확정", cost: 137, p: M },
+        { name: "세탁기", spec: "LG 트롬 F21VDSK · 21kg 드럼 · 최대혜택가 106만", cost: 117, p: M },
+        { name: "에어컨 2in1", spec: "LG 휘센 FQ17GW1HN2 · 17평형 스탠드 + 벽걸이. 실외기 1대로 해결되어 안방 발코니 구역에 적합", cost: 191, p: M },
+        { name: "TV 55인치", spec: "LG 울트라HD AI 55UA7500ENA · 138cm", cost: 124, p: R },
+        { name: "건조기", spec: "LG 트롬 RD20KNT · 20kg. 세탁 발코니 폭 실측 후 나란히/직렬 결정", cost: 137, p: O },
+        { name: "김치냉장고", spec: "LG 디오스 K225SS131 · 217L 스탠드형", cost: 89, p: O },
+        { name: "벽걸이 에어컨 추가", spec: "LG 휘센 SQ06EZ1WBS · 6평형. 작은방에 한 대 더 놓을 경우", cost: 62.7, p: O },
+        { name: "의류관리기 (스타일러)", spec: "LG 공식몰에서 가격 확인 못 함 — 매장에서 확인", cost: 0, p: O }
+      ]
+    },
+    {
+      t: "2. 주방가전",
+      n: "가스레인지·오븐 기본 설치되어 있어 살 것이 적음",
+      items: [
+        { name: "전자레인지", spec: "LG 디오스 오브제 MWJ25E · 25L", cost: 26.9, p: M },
+        { name: "전기밥솥", spec: "LG 제품 없음 — 타사에서 구입", cost: 0, p: M },
+        { name: "전기포트", spec: "LG 제품 없음 — 타사에서 구입", cost: 0, p: M },
+        { name: "정수기", spec: "LG 퓨리케어 렌탈. 월 렌탈료 확인 못 함 — 상담 필요", cost: 0, p: M },
+        { name: "식기세척기", spec: "LG 디오스 DUE1BGL1E · 12인용. 설치 배관 확인 필요", cost: 80.9, p: O },
+        { name: "인덕션 교체", spec: "가스레인지 사용 중. 교체 시 전기 승압 공사 별도", cost: 0, p: O },
+        { name: "에어프라이어", spec: "오븐으로 대체 가능. LG 제품 없음", cost: 0, p: O },
+        { name: "커피머신", spec: "LG 제품 없음 — 취향 확정 후", cost: 0, p: O }
+      ]
+    },
+    {
+      t: "3. 생활가전",
+      n: "청소기·음식물처리기는 입주 전. 로봇청소기는 살아보고 판단",
+      items: [
+        { name: "무선청소기", spec: "LG 코드제로 오브제 A9 AX920BWE · 최대혜택가 66만", cost: 74, p: M },
+        { name: "음식물처리기", spec: "음식물 쓰레기통 대체. 건조분쇄식 / 미생물식 중 선택", cost: 0, p: M },
+        { name: "헤어드라이어", spec: "LG 제품 없음 — 타사에서 구입", cost: 0, p: M },
+        { name: "비데 (안방 욕실)", spec: "LG 제품 없음. 매일 쓰는 쪽부터 1개", cost: 0, p: M },
+        { name: "스팀다리미", spec: "LG 제품 없음 — 출근복 관리용", cost: 0, p: R },
+        { name: "로봇청소기", spec: "LG 코드제로 오브제 R5 R585WKA1 · 최대혜택가 49.3만", cost: 56, p: O },
+        { name: "공기청정기", spec: "LG 퓨리케어 360 Hit AS156HWWC · 50㎡", cost: 30.5, p: O },
+        { name: "비데 (공용 욕실)", spec: "손님 방문 잦아지면 추가", cost: 0, p: O },
+        { name: "제습기", spec: "LG 휘센 제습기. 가격 확인 못 함", cost: 0, p: O }
+      ]
+    },
+    {
+      t: "4. 거실",
+      n: "소파·TV장은 거실 짧은 벽 실측 후 결정",
+      items: [
+        { name: "소파 3인", spec: "긴 벽이 아니라 짧은 벽에 배치. 폭은 실측값 −40cm 이내", cost: 0, p: R },
+        { name: "TV장", spec: "TV 구입 시 함께", cost: 0, p: R },
+        { name: "거실 테이블", spec: "소파 들인 뒤 필요하면", cost: 0, p: O },
+        { name: "러그", spec: "긴 거실 구역 분리 + 층간소음 완화", cost: 0, p: O }
+      ]
+    },
+    {
+      t: "5. 안방 · 드레스룸",
+      n: "드레스룸에 행거·화장대 기본 설치되어 있음",
+      items: [
+        { name: "매트리스 (퀸 150×200)", spec: "안방 폭 실측 후 퀸/킹 확정. 예산을 가장 아끼지 말아야 할 항목", cost: 0, p: M },
+        { name: "침대 프레임 (퀸)", spec: "저상형·헤드리스. 드레스룸 있어 수납형 불필요", cost: 0, p: M },
+        { name: "이불 (사계절)", spec: "", cost: 0, p: M },
+        { name: "이불 커버 ×2", spec: "세탁 교체용으로 2장", cost: 0, p: M },
+        { name: "매트리스 패드", spec: "매트리스 보호용", cost: 0, p: M },
+        { name: "베개 ×2", spec: "", cost: 0, p: M },
+        { name: "베개 커버 ×4", spec: "세탁 교체용", cost: 0, p: M },
+        { name: "여름 홑이불", spec: "", cost: 0, p: M },
+        { name: "협탁 ×2", spec: "콘센트 위치 확인 후", cost: 0, p: R },
+        { name: "드레스룸 서랍형 정리함", spec: "옷 걸어본 뒤 부족하면", cost: 0, p: O },
+        { name: "바지걸이 · 옷걸이", spec: "기본 행거에 추가", cost: 0, p: O }
+      ]
+    },
+    {
+      t: "6. 다이닝 가구",
+      n: "밥 먹을 자리는 입주 전 필수. 주방/식당 폭 실측 후 결정",
+      items: [
+        { name: "식탁", spec: "확장형이면 평소 120cm · 손님 오면 180cm", cost: 0, p: M },
+        { name: "식탁 의자 ×4", spec: "식탁과 같은 곳에서 사면 높이가 맞음", cost: 0, p: M },
+        { name: "주방 수납장", spec: "빌트인 수납 부족하면", cost: 0, p: O }
+      ]
+    },
+    {
+      t: "7. 냄비 · 프라이팬",
+      n: "가스레인지라 재질 제약 없음. 향후 인덕션 고려 시 인덕션 겸용으로 구입",
+      items: [
+        { name: "작은 냄비", spec: "라면·1인분용. 편수 18cm 정도", cost: 0, p: M },
+        { name: "큰 냄비", spec: "국·찌개용. 양수 20cm 이상", cost: 0, p: M },
+        { name: "프라이팬 — 일반 원형", spec: "메인. 28cm 정도", cost: 0, p: M },
+        { name: "프라이팬 — 웍형", spec: "볶음·궁중팬", cost: 0, p: M },
+        { name: "프라이팬 — 사각형", spec: "계란말이용", cost: 0, p: M }
+      ]
+    },
+    {
+      t: "8. 조리도구",
+      n: "전부 입주 전. 다이소에서 구입 예정",
+      items: [
+        { name: "뒤집개", spec: "", cost: 0, p: M },
+        { name: "국자", spec: "", cost: 0, p: M },
+        { name: "밥주걱", spec: "", cost: 0, p: M },
+        { name: "집게", spec: "", cost: 0, p: M },
+        { name: "조리용 긴 젓가락", spec: "", cost: 0, p: M },
+        { name: "도마", spec: "", cost: 0, p: M },
+        { name: "주방칼 — 큰 것", spec: "식칼", cost: 0, p: M },
+        { name: "주방칼 — 작은 것", spec: "과도", cost: 0, p: M },
+        { name: "주방 가위", spec: "", cost: 0, p: M },
+        { name: "감자칼 (필러)", spec: "", cost: 0, p: M },
+        { name: "채반 · 소쿠리", spec: "", cost: 0, p: M },
+        { name: "믹싱볼", spec: "", cost: 0, p: M },
+        { name: "냄비받침 ×2", spec: "", cost: 0, p: M }
+      ]
+    },
+    {
+      t: "9. 식기",
+      n: "2인 + 손님 대비 4인 기준. 다이소에서 구입 예정",
+      items: [
+        { name: "밥공기 ×4", spec: "", cost: 0, p: M },
+        { name: "국그릇 ×4", spec: "", cost: 0, p: M },
+        { name: "접시 대 ×2", spec: "메인 요리용", cost: 0, p: M },
+        { name: "접시 중 ×4", spec: "", cost: 0, p: M },
+        { name: "앞접시 · 종지 ×4", spec: "", cost: 0, p: M },
+        { name: "머그컵 ×4", spec: "", cost: 0, p: M },
+        { name: "유리컵 ×4", spec: "", cost: 0, p: M },
+        { name: "숟가락 ×4", spec: "", cost: 0, p: M },
+        { name: "젓가락 ×4", spec: "", cost: 0, p: M },
+        { name: "포크 ×4", spec: "", cost: 0, p: R },
+        { name: "나이프 ×2", spec: "", cost: 0, p: O }
+      ]
+    },
+    {
+      t: "10. 주방 수납 · 소모품",
+      n: "다이소에서 구입 예정",
+      items: [
+        { name: "밀폐용기 (소) 세트", spec: "양념·소량 보관", cost: 0, p: M },
+        { name: "밀폐용기 (중·대) 세트", spec: "반찬·냉동 보관", cost: 0, p: M },
+        { name: "수저통", spec: "", cost: 0, p: M },
+        { name: "식기 건조대", spec: "", cost: 0, p: M },
+        { name: "행주 · 수세미", spec: "", cost: 0, p: M },
+        { name: "주방세제 · 고무장갑", spec: "", cost: 0, p: M },
+        { name: "랩 · 호일 · 위생백", spec: "", cost: 0, p: M },
+        { name: "조미료통 · 소스병", spec: "", cost: 0, p: R }
+      ]
+    },
+    {
+      t: "11. 작은방 2개",
+      n: "현관 쪽 방에 기존 장 있음 → 서재로 활용",
+      items: [
+        { name: "책상", spec: "기존 장이 있는 방에 배치. 창을 등지지 않게 측면 배치", cost: 0, p: R },
+        { name: "사무용 의자", spec: "재택근무 있으면 여기에 예산 배분", cost: 0, p: R },
+        { name: "책장", spec: "기존 장에 책 수납 가능하면 불필요", cost: 0, p: O }
+      ]
+    },
+    {
+      t: "12. 시공",
+      n: "도배 확정. 업체 견적 3곳 이상 비교 후 금액 기입",
+      items: [
+        { name: "도배 (전체)", spec: "확정 항목. 잔금 직후 최우선. 실크·합지 견적 같이 받아 비교", cost: 0, p: M },
+        { name: "입주청소", spec: "도배 완료 후 진행. 욕실 2 + 발코니 2", cost: 0, p: M }
+      ]
+    },
+    {
+      t: "13. 커튼",
+      n: "사생활 문제로 거실·안방은 첫날부터 필수. 창 실측 후 견적",
+      items: [
+        { name: "거실 암막 커튼", spec: "", cost: 0, p: M },
+        { name: "거실 커튼봉 · 레일", spec: "", cost: 0, p: M },
+        { name: "안방 암막 커튼", spec: "", cost: 0, p: M },
+        { name: "안방 커튼봉", spec: "", cost: 0, p: M },
+        { name: "작은방 A 커튼 + 봉", spec: "", cost: 0, p: R },
+        { name: "작은방 B 커튼 + 봉", spec: "", cost: 0, p: R },
+        { name: "주방 커튼 · 블라인드", spec: "", cost: 0, p: R }
+      ]
+    },
+    {
+      t: "14. 욕실 소모품",
+      n: "욕실 2개분. 거울·수건장은 붙박이로 있어 수납 용품 불필요",
+      items: [
+        { name: "목욕 수건 ×8", spec: "", cost: 0, p: M },
+        { name: "발매트 ×2", spec: "", cost: 0, p: M },
+        { name: "칫솔걸이 ×2", spec: "", cost: 0, p: M },
+        { name: "비누받침 · 디스펜서 ×2", spec: "", cost: 0, p: M },
+        { name: "변기솔 ×2", spec: "", cost: 0, p: M },
+        { name: "욕실 슬리퍼 ×2", spec: "", cost: 0, p: M },
+        { name: "욕실 휴지통 ×2", spec: "", cost: 0, p: M }
+      ]
+    },
+    {
+      t: "15. 세탁 · 청소",
+      n: "",
+      items: [
+        { name: "빨래건조대", spec: "건조기 없으므로 필수", cost: 0, p: M },
+        { name: "빨래바구니", spec: "", cost: 0, p: M },
+        { name: "세탁세제 · 섬유유연제", spec: "", cost: 0, p: M },
+        { name: "청소용품 (밀대 · 걸레)", spec: "", cost: 0, p: M }
+      ]
+    },
+    {
+      t: "16. 쓰레기 · 분리수거",
+      n: "음식물은 음식물처리기로 처리 → 음식물 쓰레기통 불필요",
+      items: [
+        { name: "주방 일반 쓰레기통", spec: "", cost: 0, p: M },
+        { name: "분리수거함 3칸", spec: "", cost: 0, p: M },
+        { name: "종량제 봉투", spec: "강서구 규격", cost: 0, p: M }
+      ]
+    },
+    {
+      t: "17. 현관 · 공구",
+      n: "팬트리 있어 현관 수납 부담 적음",
+      items: [
+        { name: "세탁기 배수호스", spec: "", cost: 0, p: M },
+        { name: "멀티탭", spec: "", cost: 0, p: M },
+        { name: "전동드라이버", spec: "가구 조립용", cost: 0, p: M },
+        { name: "공구세트 (드라이버 · 펜치 · 줄자)", spec: "", cost: 0, p: M },
+        { name: "현관매트", spec: "", cost: 0, p: O },
+        { name: "우산꽂이", spec: "", cost: 0, p: O }
+      ]
+    }
+  ];
+
+
+  const SYNC_URL = "https://jsonblob.com/api/jsonBlob/019fe994-2363-7875-86e3-c59fa27b47b4";
+  const POLL_MIN = 15000, POLL_MAX = 90000;
+
+  const PHASES = [
+    { key: "must", label: "입주 전" },
+    { key: "rec",  label: "1~3개월" },
+    { key: "opt",  label: "나중에" }
+  ];
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+  const listEl   = document.getElementById("list");
+  const doneEl   = document.getElementById("done");
+  const totalEl  = document.getElementById("total");
+  const fillEl   = document.getElementById("fill");
+  const syncEl   = document.getElementById("sync");
+
+  let remoteState = {};
+  let bought = new Set();
+  let rows = [];            // 화면에 표시할 항목 [{key,name,p}]
+  let lastSeen = -1, pollMs = POLL_MIN, pollTimer = null, pushTimer = null;
+  let suppress = false, pendingPush = false;
+
+  const me = (() => {
+    let v = null;
+    try { v = localStorage.getItem("who"); } catch (e) {}
+    if (!v) { v = "기기" + Math.floor(Math.random()*900+100); try { localStorage.setItem("who", v); } catch (e) {} }
+    return v;
+  })();
+
+  function setSync(t, c) { syncEl.textContent = t; syncEl.className = "sync " + (c || ""); }
+
+  /* 구매물품 페이지에서 고른 항목만 추려낸다 */
+  function buildRows(state) {
+    const picked  = new Set(state.checked || []);
+    const edits   = state.edits || {};
+    const removed = new Set(state.removed || []);
+    const custom  = Array.isArray(state.custom) ? state.custom : [];
+    const out = [];
+
+    SECTIONS.forEach(sec => {
+      sec.items.forEach(base => {
+        if (removed.has(base.name)) return;
+        if (!picked.has(base.name)) return;
+        if (base.m) return;                       // 실측 항목은 구매 대상이 아님
+        const ov = edits[base.name] || {};
+        out.push({ key: base.name, name: ov.name != null ? ov.name : base.name, p: ov.p != null ? ov.p : base.p });
+      });
+    });
+
+    custom.forEach(c => {
+      if (!picked.has("c:" + c.id)) return;
+      out.push({ key: "c:" + c.id, name: c.name, p: c.p });
+    });
+
+    return out;
+  }
+
+  function render() {
+    if (!rows.length) {
+      listEl.innerHTML = '<div class="group"><p class="empty">아직 고른 항목이 없습니다.<br>금액 페이지에서 살 물건을 체크하면 여기에 나타납니다.</p></div>';
+      doneEl.textContent = "0"; totalEl.textContent = "/ 0"; fillEl.style.width = "0%";
+      return;
+    }
+
+    listEl.innerHTML = PHASES.map(ph => {
+      const items = rows.filter(r => r.p === ph.key);
+      if (!items.length) return "";
+      const d = items.filter(r => bought.has(r.key)).length;
+      return `
+        <div class="group">
+          <div class="ghead">${esc(ph.label)}<span class="cnt">${d} / ${items.length}</span></div>
+          ${items.map(r => `
+            <label class="item${bought.has(r.key) ? " done" : ""}">
+              <input type="checkbox" data-key="${esc(r.key)}"${bought.has(r.key) ? " checked" : ""}>
+              <span class="nm">${esc(r.name)}</span>
+            </label>`).join("")}
+        </div>`;
+    }).join("");
+
+    const total = rows.length;
+    const d = rows.filter(r => bought.has(r.key)).length;
+    doneEl.textContent = d;
+    totalEl.textContent = "/ " + total;
+    fillEl.style.width = (total ? Math.round(d / total * 100) : 0) + "%";
+  }
+
+  document.addEventListener("change", e => {
+    if (!e.target.matches('.item input[type="checkbox"]')) return;
+    const k = e.target.dataset.key;
+    if (e.target.checked) bought.add(k); else bought.delete(k);
+    render();
+    push();
+  });
+
+  document.getElementById("toggle").addEventListener("click", function () {
+    document.body.classList.toggle("hidedone");
+    this.textContent = document.body.classList.contains("hidedone") ? "완료 보이기" : "완료 숨기기";
+  });
+
+  function schedulePoll() {
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(() => { document.hidden ? schedulePoll() : pull(false); }, pollMs);
+  }
+
+  async function pull(initial) {
+    try {
+      const r = await fetch(SYNC_URL, { cache: "no-store" });
+      if (r.status === 429) {
+        pollMs = Math.min(pollMs * 2, POLL_MAX);
+        setSync("동기화 지연 중", "busy");
+        schedulePoll(); return;
+      }
+      if (!r.ok) throw new Error(r.status);
+      pollMs = POLL_MIN;
+
+      const s = await r.json();
+      remoteState = s;
+      const t = Number(s.updatedAt) || 0;
+
+      if (initial || t > lastSeen) {
+        lastSeen = t;
+        bought = new Set(Array.isArray(s.bought) ? s.bought : []);
+        rows = buildRows(s);
+        render();
+        setSync(initial ? "연결됨" : (s.by === me ? "동기화됨" : "상대방이 변경함"), "ok");
+      } else {
+        setSync("연결됨", "ok");
+      }
+      if (pendingPush) { pendingPush = false; push(); }
+    } catch (e) {
+      setSync("오프라인", "");
+    }
+    schedulePoll();
+  }
+
+  function push() {
+    if (suppress) return;
+    setSync("저장 중…", "busy");
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => send(0), 600);
+  }
+
+  async function send(attempt) {
+    const now = Date.now();
+    try {
+      const r = await fetch(SYNC_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.assign({}, remoteState, {
+          bought: Array.from(bought), updatedAt: now, by: me
+        }))
+      });
+      if (r.status === 429) {
+        if (attempt < 4) {
+          const w = Math.min(4000 * Math.pow(2, attempt), 60000);
+          setSync("저장 대기 (" + Math.round(w/1000) + "초)", "busy");
+          setTimeout(() => send(attempt + 1), w);
+        } else { pendingPush = true; setSync("저장 지연 — 재시도 예약", "busy"); }
+        return;
+      }
+      if (!r.ok) throw new Error(r.status);
+      lastSeen = now;
+      setSync("저장됨", "ok");
+    } catch (e) {
+      pendingPush = true;
+      setSync("저장 실패 — 재시도 예약", "");
+    }
+  }
+
+  render();
+  pull(true);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) { pollMs = POLL_MIN; clearTimeout(pollTimer); pull(false); }
+  });
+</script>
+
+</body>
+</html>

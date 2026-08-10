@@ -230,6 +230,16 @@
   .qbtn:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
   .qbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+  a.golink {
+    text-decoration: none;
+    background: var(--accent);
+    color: var(--surface);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  a.golink:hover { background: var(--accent-ink); color: var(--surface); border-color: var(--accent-ink); }
+
   /* ---------- budget tiers ---------- */
 
   .tiers {
@@ -758,6 +768,7 @@
       <button class="qbtn" type="button" data-set="rec">+ 1~3개월</button>
       <button class="qbtn" type="button" data-set="all">전체 선택</button>
       <button class="qbtn" type="button" data-set="none">모두 해제</button>
+      <a class="qbtn golink" href="check.html">구매 체크리스트 →</a>
     </div>
   </div>
 
@@ -1451,6 +1462,7 @@
   let pollMs = POLL_MIN;    // 현재 폴링 주기 (429 시 늘어남)
   let pollTimer = null;
   let pendingPush = false;  // 저장 실패분 재시도 대기
+  let remoteState = {};     // 마지막으로 받은 서버 상태 (다른 페이지 필드 보존용)
 
   const me = (() => {
     let v = null;
@@ -1539,6 +1551,7 @@
 
       pollMs = POLL_MIN;                            // 성공 → 주기 원복
       const s = await r.json();
+      remoteState = s;                              // 체크리스트 페이지의 bought 등을 보존
       const t = Number(s.updatedAt) || 0;
 
       if (initial && t === 0) {                     // 아무도 저장한 적 없음 → 기본값 유지
@@ -1572,7 +1585,7 @@
       const r = await fetch(SYNC_URL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(Object.assign({}, remoteState, {
           checked: snapshot(),
           values: snapshotValues(),
           custom: customItems,
@@ -1580,7 +1593,7 @@
           removed: Array.from(removed),
           updatedAt: now,
           by: me
-        })
+        }))
       });
 
       if (r.status === 429) {                       // 제한 → 점점 늘려가며 최대 4회 재시도
