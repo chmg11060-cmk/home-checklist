@@ -995,12 +995,16 @@
   /* ---------- 두 사람 간 체크 상태 동기화 ---------- */
 
   const SYNC_URL = "https://jsonblob.com/api/jsonBlob/019fe994-2363-7875-86e3-c59fa27b47b4";
-  const POLL_MS = 3000;
+  const POLL_MIN = 15000;   // 기본 폴링 주기
+  const POLL_MAX = 90000;   // 제한에 걸렸을 때 최대 대기
   const statusEl = document.getElementById("syncstate");
 
   let lastSeen = -1;        // 마지막으로 반영한 서버 갱신 시각
   let pushTimer = null;     // 연속 클릭 묶기
   let suppress = false;     // 서버 반영 중 push 방지
+  let pollMs = POLL_MIN;    // 현재 폴링 주기 (429 시 늘어남)
+  let pollTimer = null;
+  let pendingPush = false;  // 저장 실패분 재시도 대기
 
   const me = (() => {
     let v = null;
@@ -1054,48 +1058,83 @@
     return o;
   }
 
+  function schedulePoll() {
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(() => {
+      if (!document.hidden) pull(false);
+      else schedulePoll();
+    }, pollMs);
+  }
+
   async function pull(initial) {
     try {
       const r = await fetch(SYNC_URL, { cache: "no-store" });
-      if (!r.ok) throw new Error(r.status);
-      const s = await r.json();
-      const t = Number(s.updatedAt) || 0;
-      if (initial && t === 0) {          // 아무도 저장한 적 없음 → 기본값 유지
-        lastSeen = 0;
-        setStatus("연결됨", "ok");
+
+      if (r.status === 429) {                       // 서버 제한 → 주기를 늘려 재시도
+        pollMs = Math.min(pollMs * 2, POLL_MAX);
+        setStatus("동기화 지연 중 (재시도 대기)", "busy");
+        schedulePoll();
         return;
       }
-      if (t > lastSeen) {
+      if (!r.ok) throw new Error(r.status);
+
+      pollMs = POLL_MIN;                            // 성공 → 주기 원복
+      const s = await r.json();
+      const t = Number(s.updatedAt) || 0;
+
+      if (initial && t === 0) {                     // 아무도 저장한 적 없음 → 기본값 유지
+        lastSeen = 0;
+        setStatus("연결됨", "ok");
+      } else if (t > lastSeen) {
         lastSeen = t;
         apply(s);
-        setStatus(initial ? "연결됨" : "갱신됨 · " + (s.by === me ? "내 변경" : "상대방 변경"), "ok");
+        setStatus(initial ? "연결됨" : (s.by === me ? "동기화됨" : "상대방이 변경함"), "ok");
       } else {
         setStatus("연결됨", "ok");
       }
+
+      if (pendingPush) { pendingPush = false; push(); }
     } catch (e) {
-      setStatus("오프라인 — 이 기기에만 저장", "off");
+      setStatus("오프라인 — 이 기기에만 표시", "off");
     }
+    schedulePoll();
   }
 
   function push() {
     if (suppress) return;
     setStatus("저장 중…", "busy");
     clearTimeout(pushTimer);
-    pushTimer = setTimeout(async () => {
-      const now = Date.now();
-      try {
-        const r = await fetch(SYNC_URL, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ checked: snapshot(), values: snapshotValues(), updatedAt: now, by: me })
-        });
-        if (!r.ok) throw new Error(r.status);
-        lastSeen = now;
-        setStatus("저장됨", "ok");
-      } catch (e) {
-        setStatus("저장 실패 — 잠시 후 재시도", "off");
+    pushTimer = setTimeout(() => sendNow(0), 600);
+  }
+
+  async function sendNow(attempt) {
+    const now = Date.now();
+    try {
+      const r = await fetch(SYNC_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checked: snapshot(), values: snapshotValues(), updatedAt: now, by: me })
+      });
+
+      if (r.status === 429) {                       // 제한 → 점점 늘려가며 최대 4회 재시도
+        if (attempt < 4) {
+          const wait = Math.min(4000 * Math.pow(2, attempt), 60000);
+          setStatus("저장 대기 중 (" + Math.round(wait / 1000) + "초 후 재시도)", "busy");
+          setTimeout(() => sendNow(attempt + 1), wait);
+        } else {
+          pendingPush = true;
+          setStatus("저장 지연 — 자동 재시도 예약됨", "busy");
+        }
+        return;
       }
-    }, 600);
+      if (!r.ok) throw new Error(r.status);
+
+      lastSeen = now;
+      setStatus("저장됨", "ok");
+    } catch (e) {
+      pendingPush = true;
+      setStatus("저장 실패 — 자동 재시도 예약됨", "off");
+    }
   }
 
   /* 실측값 저장 · 삭제 */
@@ -1141,8 +1180,9 @@
   recalc();
 
   pull(true);
-  setInterval(() => { if (!document.hidden) pull(false); }, POLL_MS);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) pull(false); });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) { pollMs = POLL_MIN; clearTimeout(pollTimer); pull(false); }
+  });
 </script>
 
 </body>
