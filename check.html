@@ -175,6 +175,7 @@
 </div>
 
 <script>
+  const M = "must", R = "rec", O = "opt";
   const SECTIONS = [
     {
       t: "0. 실측할 치수",
@@ -575,6 +576,17 @@
       pendingPush = true;
       setSync("저장 실패 — 재시도 예약", "");
     }
+  }
+
+  /* 스크립트가 죽으면 빈 화면 대신 원인을 보여준다 */
+  window.addEventListener("error", e => {
+    listEl.innerHTML = '<div class="group"><p class="empty">화면을 그리지 못했습니다.<br>' +
+      esc(String(e.message || e.error || "알 수 없는 오류")) + '</p></div>';
+    setSync("오류", "");
+  });
+
+  if (typeof SECTIONS === "undefined" || !Array.isArray(SECTIONS) || !SECTIONS.length) {
+    throw new Error("항목 데이터를 불러오지 못했습니다 (SECTIONS 없음)");
   }
 
   render();
