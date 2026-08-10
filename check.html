@@ -411,12 +411,6 @@
   const SYNC_URL = "https://jsonblob.com/api/jsonBlob/019fe994-2363-7875-86e3-c59fa27b47b4";
   const POLL_MIN = 15000, POLL_MAX = 90000;
 
-  const PHASES = [
-    { key: "must", label: "입주 전" },
-    { key: "rec",  label: "1~3개월" },
-    { key: "opt",  label: "나중에" }
-  ];
-
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
   const listEl   = document.getElementById("list");
@@ -473,20 +467,14 @@
       return;
     }
 
-    listEl.innerHTML = PHASES.map(ph => {
-      const items = rows.filter(r => r.p === ph.key);
-      if (!items.length) return "";
-      const d = items.filter(r => bought.has(r.key)).length;
-      return `
-        <div class="group">
-          <div class="ghead">${esc(ph.label)}<span class="cnt">${d} / ${items.length}</span></div>
-          ${items.map(r => `
-            <label class="item${bought.has(r.key) ? " done" : ""}">
-              <input type="checkbox" data-key="${esc(r.key)}"${bought.has(r.key) ? " checked" : ""}>
-              <span class="nm">${esc(r.name)}</span>
-            </label>`).join("")}
-        </div>`;
-    }).join("");
+    listEl.innerHTML = `
+      <div class="group">
+        ${rows.map(r => `
+          <label class="item${bought.has(r.key) ? " done" : ""}">
+            <input type="checkbox" data-key="${esc(r.key)}"${bought.has(r.key) ? " checked" : ""}>
+            <span class="nm">${esc(r.name)}</span>
+          </label>`).join("")}
+      </div>`;
 
     const total = rows.length;
     const d = rows.filter(r => bought.has(r.key)).length;
