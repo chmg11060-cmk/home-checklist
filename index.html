@@ -377,6 +377,71 @@
     min-width: 42px;
   }
 
+  /* ---------- 항목 추가 ---------- */
+
+  .addwrap {
+    border-top: 1px dashed var(--line);
+    padding: 12px 22px 14px;
+  }
+
+  .addbtn {
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    color: var(--accent);
+    background: transparent;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background .14s ease, border-color .14s ease;
+  }
+
+  .addbtn:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .addbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .addform {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .af {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--ground);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 11px;
+    min-width: 0;
+  }
+
+  .af::placeholder { color: var(--ink-3); }
+  .af:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+  .af-name { flex: 2 1 190px; }
+  .af-spec { flex: 3 1 240px; }
+  .af-cost { flex: 0 1 120px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .af-p    { flex: 0 1 130px; cursor: pointer; }
+
+  .rowwrap.custom .r-name::before {
+    content: "＋";
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 2px;
+  }
+
+  .cdel {
+    font-size: 12.5px;
+    padding: 5px 11px;
+  }
+
+  @media (max-width: 620px) {
+    .addwrap { padding-left: 16px; padding-right: 16px; }
+    .af-name, .af-spec, .af-cost, .af-p { flex: 1 1 100%; }
+  }
+
   .row input {
     grid-area: box;
     appearance: none;
@@ -946,9 +1011,27 @@
         <div class="section-head">
           <h2>${esc(sec.t)}</h2>
           ${sec.n ? `<p class="sec-note">${esc(sec.n)}</p>` : '<p class="sec-note"></p>'}
-          ${secTotal ? `<span class="sec-sum">입주 전 ${fmt(secTotal)}만원</span>` : ""}
+          <span class="sec-sum" id="ss-${si}">입주 전 ${fmt(secTotal)}만원</span>
         </div>
-        <div class="rows">${rows}</div>
+        <div class="rows">
+          ${rows}
+          <div class="customrows" data-sec="${si}"></div>
+          <div class="addwrap">
+            <button type="button" class="addbtn" data-sec="${si}">＋ 항목 추가</button>
+            <div class="addform" data-sec="${si}" hidden>
+              <input type="text" class="af af-name" placeholder="품목명 (예: 스탠드 조명)" autocomplete="off">
+              <input type="text" class="af af-spec" placeholder="설명·메모 (선택)" autocomplete="off">
+              <input type="text" class="af af-cost" inputmode="numeric" placeholder="금액(만원)" autocomplete="off">
+              <select class="af af-p">
+                <option value="must">입주 전</option>
+                <option value="rec">1~3개월</option>
+                <option value="opt" selected>나중에</option>
+              </select>
+              <button type="button" class="mbtn save af-add" data-sec="${si}">추가</button>
+              <button type="button" class="mbtn af-cancel" data-sec="${si}">취소</button>
+            </div>
+          </div>
+        </div>
       </section>`;
   }).join("");
 
@@ -962,25 +1045,68 @@
   document.getElementById("tips").innerHTML = TIPS.map(t => `
     <div class="tip"><b>${esc(t.b)}</b><span>${esc(t.s)}</span></div>`).join("");
 
-  const boxes = Array.from(document.querySelectorAll(".row input"));
   const totalEl = document.getElementById("total");
   const countEl = document.getElementById("count");
 
+  let customItems = [];   // 사용자가 추가한 항목 (두 사람 공유)
+
+  const getBoxes = () => Array.from(document.querySelectorAll('.row input[type="checkbox"]'));
+
   function recalc() {
     let sum = 0, n = 0;
-    for (const b of boxes) {
-      if (b.checked) { sum += Number(b.dataset.cost); n++; }
+    for (const b of getBoxes()) {
+      if (b.checked) { sum += Number(b.dataset.cost) || 0; n++; }
     }
     totalEl.textContent = fmt(sum);
     countEl.textContent = n + "개 선택";
   }
 
-  boxes.forEach(b => b.addEventListener("change", () => { recalc(); push(); }));
+  function updateSecSums() {
+    SECTIONS.forEach((sec, si) => {
+      const el = document.getElementById("ss-" + si);
+      if (!el) return;
+      let s = sec.items.filter(i => i.p === M).reduce((a, i) => a + i.cost, 0);
+      s += customItems.filter(c => c.sec === si && c.p === "must")
+                      .reduce((a, c) => a + (Number(c.cost) || 0), 0);
+      el.textContent = "입주 전 " + fmt(s) + "만원";
+      el.style.visibility = s > 0 ? "visible" : "hidden";
+    });
+  }
+
+  function customRow(c) {
+    return `
+      <div class="rowwrap custom">
+        <label class="row">
+          <input type="checkbox" data-cost="${Number(c.cost) || 0}" data-p="${c.p}" data-key="c:${esc(c.id)}">
+          <span class="r-name">
+            ${esc(c.name)}
+            <span class="tag ${c.p}">${P_LABEL[c.p]}</span>
+          </span>
+          ${c.spec ? `<span class="r-spec">${esc(c.spec)}</span>` : ""}
+          <span class="r-cost">${Number(c.cost) > 0 ? fmt(Number(c.cost)) + " <small>만원</small>" : "<small>—</small>"}</span>
+        </label>
+        <div class="measure">
+          <button type="button" class="mbtn del cdel" data-cid="${esc(c.id)}">이 항목 삭제</button>
+        </div>
+      </div>`;
+  }
+
+  function renderCustom() {
+    document.querySelectorAll(".customrows").forEach(box => {
+      const si = Number(box.dataset.sec);
+      box.innerHTML = customItems.filter(c => c.sec === si).map(customRow).join("");
+    });
+  }
+
+  /* 체크박스는 동적으로 늘어나므로 위임 방식으로 처리 */
+  document.addEventListener("change", e => {
+    if (e.target.matches('.row input[type="checkbox"]')) { recalc(); push(); }
+  });
 
   document.querySelectorAll(".qbtn").forEach(btn => {
     btn.addEventListener("click", () => {
       const set = btn.dataset.set;
-      boxes.forEach(b => {
+      getBoxes().forEach(b => {
         const p = b.dataset.p;
         if (set === "all") b.checked = true;
         else if (set === "none") b.checked = false;
@@ -990,6 +1116,52 @@
       recalc();
       push();
     });
+  });
+
+  /* 항목 추가 · 삭제 */
+  document.addEventListener("click", e => {
+    const open = e.target.closest(".addbtn");
+    if (open) {
+      const f = document.querySelector('.addform[data-sec="' + open.dataset.sec + '"]');
+      f.hidden = false; open.hidden = true; f.querySelector(".af-name").focus();
+      return;
+    }
+
+    const cancel = e.target.closest(".af-cancel");
+    if (cancel) {
+      const f = cancel.closest(".addform");
+      f.querySelectorAll(".af").forEach(i => { if (i.tagName === "INPUT") i.value = ""; });
+      f.hidden = true;
+      f.parentElement.querySelector(".addbtn").hidden = false;
+      return;
+    }
+
+    const add = e.target.closest(".af-add");
+    if (add) {
+      const f = add.closest(".addform");
+      const name = f.querySelector(".af-name").value.trim();
+      if (!name) { f.querySelector(".af-name").focus(); return; }
+      const cost = parseInt((f.querySelector(".af-cost").value || "").replace(/[^0-9]/g, ""), 10);
+      customItems.push({
+        id: "x" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36),
+        sec: Number(add.dataset.sec),
+        name: name,
+        spec: f.querySelector(".af-spec").value.trim(),
+        cost: isNaN(cost) ? 0 : cost,
+        p: f.querySelector(".af-p").value
+      });
+      f.querySelectorAll("input.af").forEach(i => i.value = "");
+      f.hidden = true;
+      f.parentElement.querySelector(".addbtn").hidden = false;
+      renderCustom(); recalc(); updateSecSums(); push();
+      return;
+    }
+
+    const del = e.target.closest(".cdel");
+    if (del) {
+      customItems = customItems.filter(c => c.id !== del.dataset.cid);
+      renderCustom(); recalc(); updateSecSums(); push();
+    }
   });
 
   /* ---------- 두 사람 간 체크 상태 동기화 ---------- */
@@ -1032,8 +1204,13 @@
 
   function apply(state) {
     suppress = true;
+
+    customItems = Array.isArray(state.custom) ? state.custom : [];
+    renderCustom();
+
     const on = new Set(state.checked || []);
-    boxes.forEach(b => { b.checked = on.has(b.dataset.key); });
+    getBoxes().forEach(b => { b.checked = on.has(b.dataset.key); });
+
     const vals = state.values || {};
     fields.forEach(f => {
       if (document.activeElement === f) return;   // 입력 중인 칸은 건드리지 않음
@@ -1042,12 +1219,14 @@
       f.dataset.saved = (v != null && v !== "") ? "1" : "0";
       markField(f, f.dataset.saved === "1");
     });
+
     recalc();
+    updateSecSums();
     suppress = false;
   }
 
   function snapshot() {
-    return boxes.filter(b => b.checked).map(b => b.dataset.key);
+    return getBoxes().filter(b => b.checked).map(b => b.dataset.key);
   }
 
   function snapshotValues() {
@@ -1113,7 +1292,13 @@
       const r = await fetch(SYNC_URL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ checked: snapshot(), values: snapshotValues(), updatedAt: now, by: me })
+        body: JSON.stringify({
+          checked: snapshot(),
+          values: snapshotValues(),
+          custom: customItems,
+          updatedAt: now,
+          by: me
+        })
       });
 
       if (r.status === 429) {                       // 제한 → 점점 늘려가며 최대 4회 재시도
@@ -1176,8 +1361,9 @@
     });
   });
 
-  boxes.forEach(b => { b.checked = false; });
+  getBoxes().forEach(b => { b.checked = false; });
   recalc();
+  updateSecSums();
 
   pull(true);
   document.addEventListener("visibilitychange", () => {
