@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<title>신혼집 가전·가구 체크리스트 — 명지협성휴포레 24B1</title>
+
+<style>
+  :root {
+    --ground: #F5F7F4;
+    --surface: #FFFFFF;
+    --surface-2: #ECF0EA;
+    --line: #DCE2D9;
+    --line-soft: #E8EDE5;
+    --ink: #161C19;
+    --ink-2: #48534D;
+    --ink-3: #7B867E;
+    --accent: #1F5F52;
+    --accent-ink: #16443A;
+    --accent-soft: #DBEBE4;
+    --warn: #8A5A11;
+    --warn-soft: #F5EAD6;
+    --shadow: 0 1px 2px rgba(22, 28, 25, .05), 0 8px 24px -16px rgba(22, 28, 25, .28);
+
+    --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont,
+                 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #111614;
+      --surface: #191F1C;
+      --surface-2: #212824;
+      --line: #2C3531;
+      --line-soft: #232B27;
+      --ink: #E8EDE8;
+      --ink-2: #A5B0AA;
+      --ink-3: #75817A;
+      --accent: #6FC3AC;
+      --accent-ink: #9BD9C7;
+      --accent-soft: #1C382F;
+      --warn: #D6A251;
+      --warn-soft: #33291A;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #111614;
+    --surface: #191F1C;
+    --surface-2: #212824;
+    --line: #2C3531;
+    --line-soft: #232B27;
+    --ink: #E8EDE8;
+    --ink-2: #A5B0AA;
+    --ink-3: #75817A;
+    --accent: #6FC3AC;
+    --accent-ink: #9BD9C7;
+    --accent-soft: #1C382F;
+    --warn: #D6A251;
+    --warn-soft: #33291A;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -16px rgba(0, 0, 0, .8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0 20px 88px;
+    word-break: keep-all;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  /* ---------- header ---------- */
+
+  .masthead {
+    padding: 56px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  .masthead h1 {
+    font-size: clamp(30px, 5.2vw, 44px);
+    line-height: 1.18;
+    letter-spacing: -.02em;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .dek {
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+    font-size: 16.5px;
+  }
+
+  .meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    margin-top: 6px;
+  }
+
+  .meta-chip {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .01em;
+    color: var(--ink-2);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- sticky total ---------- */
+
+  .totalbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 22px;
+  }
+
+  .total-figure {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-right: auto;
+  }
+
+  .total-figure .num {
+    font-family: var(--font-mono);
+    font-size: 27px;
+    font-weight: 600;
+    letter-spacing: -.02em;
+    color: var(--accent-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .total-figure .unit { font-size: 14px; color: var(--ink-2); }
+
+  .total-figure .count {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    padding-left: 10px;
+    border-left: 1px solid var(--line);
+    margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .syncstate {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-3);
+    padding-left: 10px;
+    border-left: 1px solid var(--line);
+    margin-left: 4px;
+    white-space: nowrap;
+  }
+
+  .syncstate::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ink-3);
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+
+  .syncstate.ok    { color: var(--accent); }
+  .syncstate.ok::before    { background: var(--accent); }
+  .syncstate.busy  { color: var(--warn); }
+  .syncstate.busy::before  { background: var(--warn); }
+  .syncstate.off   { color: var(--ink-3); }
+
+  .quickset { display: flex; flex-wrap: wrap; gap: 7px; }
+
+  .qbtn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--ink-2);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background .14s ease, color .14s ease, border-color .14s ease;
+  }
+
+  .qbtn:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+  .qbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- budget tiers ---------- */
+
+  .tiers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+    gap: 14px;
+  }
+
+  .tier {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tier.is-target { border-color: var(--accent); background: var(--accent-soft); }
+
+  .tier-name { font-size: 14px; font-weight: 700; letter-spacing: -.01em; }
+
+  .tier-sum {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tier.is-target .tier-sum, .tier.is-target .tier-name { color: var(--accent-ink); }
+
+  .tier-note { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+  .tier.is-target .tier-note { color: var(--accent-ink); opacity: .85; }
+
+  /* ---------- sections ---------- */
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .section-head {
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 14px;
+  }
+
+  .section-head h2 {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -.015em;
+    margin: 0;
+  }
+
+  .section-head .sec-note {
+    font-size: 13.5px;
+    color: var(--ink-3);
+    margin: 0;
+    margin-right: auto;
+  }
+
+  .section-head .sec-sum {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .rows { display: flex; flex-direction: column; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+    grid-template-areas: "box name cost" ". spec cost";
+    column-gap: 12px;
+    align-items: start;
+    padding: 13px 22px;
+    border-top: 1px solid var(--line-soft);
+    cursor: pointer;
+    transition: background .12s ease;
+  }
+
+  .rows .row:first-child { border-top: 0; }
+  .row:hover { background: var(--surface-2); }
+  .row:has(input:checked) { background: var(--accent-soft); }
+
+  .row input {
+    grid-area: box;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 17px;
+    height: 17px;
+    margin: 4px 0 0;
+    border: 1.5px solid var(--ink-3);
+    border-radius: 5px;
+    background: var(--surface);
+    cursor: pointer;
+    position: relative;
+    flex: none;
+  }
+
+  .row input:checked { background: var(--accent); border-color: var(--accent); }
+
+  .row input:checked::after {
+    content: "";
+    position: absolute;
+    left: 4.5px;
+    top: 1px;
+    width: 4px;
+    height: 9px;
+    border: solid var(--surface);
+    border-width: 0 2px 2px 0;
+    transform: rotate(43deg);
+  }
+
+  .row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .r-name {
+    grid-area: name;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    font-size: 15.5px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+  }
+
+  .r-spec {
+    grid-area: spec;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    line-height: 1.5;
+    margin-top: 1px;
+  }
+
+  .r-cost {
+    grid-area: cost;
+    font-family: var(--font-mono);
+    font-size: 14.5px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    padding-top: 2px;
+    align-self: center;
+  }
+
+  .r-cost small { color: var(--ink-3); font-size: 11.5px; }
+
+  /* priority + flag chips */
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .05em;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-weight: 500;
+    white-space: nowrap;
+    line-height: 1.6;
+  }
+
+  .tag.must { background: var(--accent); color: var(--surface); }
+  .tag.rec  { background: transparent; color: var(--accent-ink); border: 1px solid var(--accent); }
+  .tag.opt  { background: var(--surface-2); color: var(--ink-3); border: 1px solid var(--line); }
+  .tag.bi   { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+
+  /* ---------- timeline ---------- */
+
+  /* ---------- confirmed ---------- */
+
+  .confs { display: flex; flex-direction: column; }
+
+  .conf {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 3px 16px;
+    padding: 14px 22px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .confs .conf:first-child { border-top: 0; }
+
+  .conf-what {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .conf-note { grid-column: 1; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+
+  .conf-amt {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: center;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .conf-amt.save { color: var(--accent); }
+  .conf-amt.add { color: var(--warn); }
+  .conf-amt.zero { color: var(--ink-3); font-size: 12.5px; }
+
+  .netline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    padding: 16px 22px;
+    border-top: 1px solid var(--line);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .netline b { font-weight: 600; }
+  .netline .s { color: var(--accent); }
+  .netline .a { color: var(--warn); }
+
+  @media (max-width: 620px) {
+    .conf { padding-left: 16px; padding-right: 16px; }
+    .netline { padding-left: 16px; padding-right: 16px; }
+  }
+
+  /* ---------- rooms ---------- */
+
+  .rooms { display: flex; flex-direction: column; }
+
+  .room {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 4px 20px;
+    padding: 16px 22px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .rooms .room:first-child { border-top: 0; }
+
+  .room-where {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--accent);
+    letter-spacing: .01em;
+    padding-top: 2px;
+  }
+
+  .room-use { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+  .room-note { grid-column: 2; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+
+  @media (max-width: 620px) {
+    .room { grid-template-columns: 1fr; padding-left: 16px; padding-right: 16px; }
+    .room-note { grid-column: 1; }
+  }
+
+  .timeline { display: flex; flex-direction: column; }
+
+  .tl-step {
+    display: grid;
+    grid-template-columns: 128px minmax(0, 1fr);
+    gap: 4px 20px;
+    padding: 16px 22px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .timeline .tl-step:first-child { border-top: 0; }
+
+  .tl-when {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--accent);
+    letter-spacing: .01em;
+    padding-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tl-what { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+  .tl-detail { grid-column: 2; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+
+  /* ---------- tips ---------- */
+
+  .tips { display: flex; flex-direction: column; }
+
+  .tip {
+    padding: 15px 22px;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .tips .tip:first-child { border-top: 0; }
+  .tip b { font-size: 14.5px; font-weight: 700; letter-spacing: -.01em; }
+  .tip span { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+
+  /* ---------- footer ---------- */
+
+  .foot {
+    font-size: 13px;
+    color: var(--ink-3);
+    line-height: 1.6;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+  }
+
+  @media (max-width: 620px) {
+    .masthead { padding-top: 36px; }
+    .row { grid-template-columns: 24px minmax(0, 1fr); grid-template-areas: "box name" ". spec" ". cost"; padding: 13px 16px; }
+    .r-cost { align-self: start; padding-top: 4px; }
+    .section-head, .tl-step, .tip { padding-left: 16px; padding-right: 16px; }
+    .tl-step { grid-template-columns: 1fr; }
+    .tl-detail { grid-column: 1; }
+    .total-figure .num { font-size: 23px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">혼수 준비 · 2026</p>
+    <h1>신혼집 가전·가구 체크리스트</h1>
+    <p class="dek">
+      실속형 기준. 지금 다 사지 않고 <b>당장 없으면 불편한 것</b>만 먼저 구입.
+      로봇청소기·식기세척기처럼 살다가 필요해지면 사도 되는 것은 뒤로 미룸.
+      항목 체크 시 예산 자동 합산.
+    </p>
+    <div class="meta-strip">
+      <span class="meta-chip">방 3 · 욕실 2 · 드레스룸 · 팬트리</span>
+      <span class="meta-chip">가스레인지 · 오븐 완비</span>
+      <span class="meta-chip">도배 시공 확정</span>
+      <span class="meta-chip">본계약 2026-08-17</span>
+    </div>
+  </header>
+
+  <div class="totalbar">
+    <div class="total-figure">
+      <span class="num" id="total">0</span>
+      <span class="unit">만원</span>
+      <span class="count" id="count">0개 선택</span>
+      <span class="syncstate" id="syncstate">연결 중…</span>
+    </div>
+    <div class="quickset">
+      <button class="qbtn" type="button" data-set="must">입주 전만</button>
+      <button class="qbtn" type="button" data-set="rec">+ 1~3개월</button>
+      <button class="qbtn" type="button" data-set="all">전체 선택</button>
+      <button class="qbtn" type="button" data-set="none">모두 해제</button>
+    </div>
+  </div>
+
+  <div class="tiers" id="tiers"></div>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>현장 확인 결과</h2>
+      <p class="sec-note">직접 보고 확인한 내용 — 아래 체크리스트에 반영 완료</p>
+    </div>
+    <div class="confs" id="confirmed"></div>
+    <div class="netline" id="netline"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>공간 배치</h2>
+      <p class="sec-note">각 방 용도 먼저 확정 → 살 가구 결정</p>
+    </div>
+    <div class="rooms" id="rooms"></div>
+  </section>
+
+  <main id="sections" style="display:flex; flex-direction:column; gap:24px;"></main>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>구매 타임라인</h2>
+      <p class="sec-note">잔금일 기준 역산 — 잔금일 확정 후 실제 날짜 기입</p>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>비용 절감</h2>
+      <p class="sec-note">같은 물건 더 싸게 사는 법</p>
+    </div>
+    <div class="tips" id="tips"></div>
+  </section>
+
+  <p class="foot">
+    금액은 2026년 8월 기준 실속형(중저가 브랜드) 참고가. 실제 견적은 브랜드·시기·프로모션에 따라 변동.
+    「입주 전」만 사면 약 1,060만원. 나머지는 살면서 필요할 때 추가.
+  </p>
+
+</div>
+
+<script>
+  const M = "must", R = "rec", O = "opt";
+
+  const SECTIONS = [
+    {
+      t: "0. 실측할 치수",
+      n: "줄자 들고 한 번만 더 방문 → 아래 치수 기록",
+      items: [
+        { name: "계약서상 전용면적(㎡)", spec: "가구 사이즈 판단 기준. 계약서 숫자로 확정", cost: 0, p: M },
+        { name: "거실 짧은 벽 길이", spec: "이 값 −40cm = 소파 최대 폭", cost: 0, p: M },
+        { name: "세탁 발코니 폭", spec: "130cm 이상 → 나중에 건조기 나란히 배치 가능. 미만 → 직렬 또는 워시콤보", cost: 0, p: M },
+        { name: "냉장고 자리 폭·높이", spec: "보통 900mm. 실측해야 600L급 진입 여부 확인 가능", cost: 0, p: M },
+        { name: "안방 폭", spec: "퀸(150) / 킹(180) 판단. 침대 양옆 60cm 통로 확보 필요", cost: 0, p: M },
+        { name: "거실·안방 창 치수", spec: "커튼 견적 기준. 우선 이 두 곳만", cost: 0, p: M },
+        { name: "작은방·주방 창 치수", spec: "커튼 2차분", cost: 0, p: R },
+        { name: "기존 장·팬트리 내부 치수", spec: "수납 가능량 파악 → 추가 가구 필요 여부 결정", cost: 0, p: R }
+      ]
+    },
+    {
+      t: "1. 대형가전",
+      n: "냉장고·세탁기·에어컨만 입주 전. TV·건조기는 살면서 판단",
+      items: [
+        { name: "냉장고", spec: "양문형 600L대 중저가. 2인 가구에 700L는 과함", cost: 120, p: M },
+        { name: "세탁기", spec: "드럼 21kg 중저가. 통돌이 선택 시 60만원대", cost: 80, p: M },
+        { name: "에어컨", spec: "거실 스탠드 1 + 안방 벽걸이 1, 설치비 포함. 실외기 전용 구역 있어 추가 공사 없음. 입주 후 설치하면 짐을 다 옮겨야 하므로 입주 전 필수", cost: 200, p: M },
+        { name: "TV", spec: "50~55인치 중저가. 없어도 당장 불편하지 않음. 거실 배치 확정 후 구입", cost: 90, p: R },
+        { name: "건조기", spec: "빨래건조대로 대체 가능. 장마·겨울 한 번 겪어보고 판단", cost: 100, p: O },
+        { name: "김치냉장고", spec: "김치 생기면. 신혼 초에는 냉장고 김치칸으로 충분", cost: 90, p: O },
+        { name: "의류관리기", spec: "드레스룸 여유 공간 있음. 우선순위 낮음", cost: 140, p: O }
+      ]
+    },
+    {
+      t: "2. 주방가전",
+      n: "가스레인지·오븐 완비 → 남은 건 소형가전뿐",
+      items: [
+        { name: "전기밥솥", spec: "IH 6인용 중저가", cost: 20, p: M },
+        { name: "전자레인지", spec: "오븐이 있어도 데우는 속도는 전자레인지가 압도적", cost: 12, p: M },
+        { name: "전기포트", spec: "매일 사용. 금액 부담 없음", cost: 3, p: M },
+        { name: "정수기", spec: "렌탈 월 2~3만원. 초기비용 없음", cost: 0, p: M },
+        { name: "식기세척기", spec: "설거지 부담 느껴지면 구입. 프리스탠딩 8인용은 배관 공사 불필요", cost: 70, p: O, bi: true },
+        { name: "에어프라이어", spec: "오븐으로 대체 가능. 예열 없이 빠르게 쓰고 싶을 때만", cost: 10, p: O },
+        { name: "커피머신", spec: "취향 확정 후", cost: 30, p: O },
+        { name: "인덕션 교체", spec: "가스레인지 사용 중. 교체 시 전기 승압 공사 별도 발생", cost: 70, p: O }
+      ]
+    },
+    {
+      t: "3. 생활가전",
+      n: "청소기·드라이어만 입주 전. 로봇청소기는 살아보고 판단",
+      items: [
+        { name: "무선청소기", spec: "중저가. 청소는 미룰 수 없음", cost: 35, p: M },
+        { name: "헤어드라이어", spec: "매일 사용", cost: 8, p: M },
+        { name: "비데 (안방 욕실)", spec: "매일 쓰는 쪽부터 1개. 공용 욕실은 나중에", cost: 25, p: M },
+        { name: "스팀다리미", spec: "출근복 관리용", cost: 8, p: R },
+        { name: "비데 (공용 욕실)", spec: "손님 방문 잦아지면 추가", cost: 20, p: O },
+        { name: "로봇청소기", spec: "무선청소기로 버티다 청소 부담 커지면 구입", cost: 90, p: O },
+        { name: "공기청정기", spec: "미세먼지 심한 계절 겪어보고 판단", cost: 40, p: O },
+        { name: "제습기", spec: "명지는 바다 인접. 첫 여름 습도 확인 후 결정", cost: 30, p: O }
+      ]
+    },
+    {
+      t: "4. 거실",
+      n: "소파·TV는 살아보고 사이즈 결정 — 미리 사면 안 맞을 확률 높음",
+      items: [
+        { name: "소파", spec: "3인용 중저가. 거실 짧은 벽 실측 후 구입. 전시품·중고도 무방", cost: 90, p: R },
+        { name: "TV장", spec: "TV 구입 시 함께", cost: 25, p: R },
+        { name: "거실 테이블", spec: "소파 들인 뒤 필요하면", cost: 15, p: O },
+        { name: "러그", spec: "긴 거실 구역 분리 + 층간소음 완화", cost: 15, p: O }
+      ]
+    },
+    {
+      t: "5. 안방 · 드레스룸",
+      n: "침대만 입주 전. 드레스룸에 행거·화장대 이미 있음",
+      items: [
+        { name: "매트리스", spec: "퀸 기준. 실속형이라도 이 항목만은 중급 이상. 하루 3분의 1을 사용하는 물건", cost: 120, p: M },
+        { name: "침대 프레임", spec: "저상형·헤드리스 실속형. 드레스룸 있어 수납형 불필요", cost: 40, p: M },
+        { name: "침구", spec: "사계절 1세트 + 여름 홑이불", cost: 25, p: M },
+        { name: "협탁 2개", spec: "콘센트 위치 확인 후", cost: 15, p: R },
+        { name: "화장대 스툴 · 조명", spec: "화장대 본체는 기본 설치됨", cost: 10, p: R },
+        { name: "드레스룸 보조 수납", spec: "서랍형 정리함·바지걸이. 옷 걸어본 뒤 부족하면", cost: 20, p: O }
+      ]
+    },
+    {
+      t: "6. 주방 · 다이닝",
+      n: "밥 먹을 자리는 입주 전 필수",
+      items: [
+        { name: "식탁 + 의자", spec: "4인용 120cm 실속형. 2인 확장형 테이블도 대안", cost: 45, p: M },
+        { name: "조리도구 · 냄비 · 팬", spec: "가스레인지라 재질 제약 없음. 향후 인덕션 고려 시 겸용으로 구입", cost: 25, p: M },
+        { name: "식기 · 커트러리", spec: "2인 기준 + 손님용 약간", cost: 20, p: M },
+        { name: "주방 수납장", spec: "빌트인 수납 부족하면", cost: 30, p: O }
+      ]
+    },
+    {
+      t: "7. 작은방 2개",
+      n: "현관 쪽 방에 기존 장 있음 → 서재로 활용",
+      items: [
+        { name: "책상 + 의자", spec: "재택근무 있으면 입주 전으로 상향. 의자에 예산 배분", cost: 45, p: R },
+        { name: "책장", spec: "기존 장에 책 수납 가능하면 불필요", cost: 25, p: O },
+        { name: "두 번째 방 가구", spec: "용도 확정된 뒤 구입", cost: 40, p: O }
+      ]
+    },
+    {
+      t: "8. 시공",
+      n: "도배만 확정. 나머지는 살면서 판단",
+      items: [
+        { name: "도배 (전체)", spec: "합지 기준. 실크벽지는 +80만. 잔금 직후 최우선 진행", cost: 180, p: M },
+        { name: "입주청소", spec: "도배 완료 후 진행. 욕실 2 + 발코니 2", cost: 35, p: M },
+        { name: "커튼 (거실 · 안방)", spec: "사생활 문제로 첫날부터 필수. 기성 사이즈 우선, 안 맞는 창만 제작", cost: 30, p: M },
+        { name: "커튼 (작은방 · 주방)", spec: "당장 안 쓰는 방은 뒤로 미뤄도 무방", cost: 25, p: R },
+        { name: "조명 교체", spec: "기존 등이 작동하면 미룸. 몰딩 도색과 함께 하면 체감 효과 큼", cost: 70, p: O },
+        { name: "장판 / 마루", spec: "바닥 상태 보고 판단. 도배와 따로 하면 인건비 이중 발생", cost: 120, p: O },
+        { name: "몰딩 · 걸레받이 도색", spec: "도배할 때 같이 하면 저렴. 체리색이면 흰색 전환 효과 큼", cost: 60, p: O }
+      ]
+    },
+    {
+      t: "9. 소모품 · 기타",
+      n: "금액은 작지만 없으면 첫날부터 불편",
+      items: [
+        { name: "빨래건조대", spec: "건조기 없으므로 필수", cost: 8, p: M },
+        { name: "욕실 소모품", spec: "수건·발매트·샤워커튼. 거울과 수건장은 붙박이", cost: 8, p: M },
+        { name: "쓰레기통 · 분리수거함", spec: "첫날부터 필요", cost: 5, p: M },
+        { name: "세탁기 부속 · 멀티탭 · 공구", spec: "배수호스, 수전 연장, 전동드라이버", cost: 5, p: M },
+        { name: "전신거울", spec: "드레스룸용. 욕실 거울은 붙박이로 있음", cost: 10, p: R },
+        { name: "세탁 발코니 수납장", spec: "세제·청소용품 보관", cost: 15, p: O },
+        { name: "현관매트 · 우산꽂이", spec: "팬트리 있어 현관 수납 부담 적음", cost: 5, p: O }
+      ]
+    }
+  ];
+
+  const TIERS = [
+    { name: "입주 전 — 지금 살 것", sum: "약 1,050만원", note: "없으면 첫날부터 불편한 것만. 도배·에어컨·냉장고·세탁기·침대·식탁 중심", target: true },
+    { name: "1~3개월 내", sum: "누적 약 1,370만원", note: "소파·TV·책상. 실제로 살아보며 사이즈와 배치를 정한 뒤 구입", target: false },
+    { name: "필요해지면", sum: "누적 약 2,470만원", note: "건조기·식기세척기·로봇청소기·장판. 불편을 느끼는 시점에 개별 구입", target: false }
+  ];
+
+  const CONFIRMED = [
+    { what: "도배 전체 시공 필요", note: "현장에서 확인한 유일한 추가 작업. 잔금 직후 최우선. 합지 기준 180만, 실크 선택 시 +80만.", amt: "+180만", kind: "add" },
+    { what: "에어컨 실외기 전용 구역 있음", note: "안방 발코니에 별도 설치 구역. 배관 추가 공사나 위치 제약 없음.", amt: "추가비 없음", kind: "zero" },
+    { what: "욕조 유지 + 줄눈 시공 완료", note: "전 주인이 줄눈까지 완료. 욕실 관련 시공 전부 제외.", amt: "−180만", kind: "save" },
+    { what: "가스레인지 기본 설치", note: "쿡탑 구입 불필요. 인덕션 교체는 선택 항목으로 이동.", amt: "−70만", kind: "save" },
+    { what: "드레스룸 · 팬트리 행거 기본", note: "시스템 행거 시공 불필요. 팬트리로 현관 수납까지 해결.", amt: "−70만", kind: "save" },
+    { what: "드레스룸 화장대 기본", note: "본체 설치됨. 스툴과 조명만 보완.", amt: "−45만", kind: "save" },
+    { what: "현관 쪽 방에 기존 장 설치", note: "이 방을 서재로 사용 → 책장 불필요. 장 내부 치수만 실측.", amt: "−30만", kind: "save" },
+    { what: "욕실 붙박이 거울 · 수건 수납장", note: "욕실 수납 용품 거의 불필요. 수건과 발매트만 준비.", amt: "−10만", kind: "save" },
+    { what: "오븐 기본 설치", note: "미니오븐 불필요. 에어프라이어도 선택으로 이동.", amt: "−10만", kind: "save" }
+  ];
+
+  const ROOMS = [
+    { where: "안방", use: "침대만 배치", note: "드레스룸·전용 욕실·발코니 인접. 옷과 화장품이 전부 드레스룸으로 빠지므로 침대와 협탁이면 충분." },
+    { where: "드레스룸", use: "옷 수납 + 화장 — 완비", note: "행거와 화장대 기본 설치. 스툴·거울 조명·전신거울만 추가. 서랍형 정리함은 옷 걸어본 뒤 판단." },
+    { where: "팬트리 (현관 옆)", use: "생활용품 · 계절 옷 창고", note: "행거 기본 설치. 현관 수납 부담 없음 → 별도 수납 가구 불필요." },
+    { where: "작은방 A (현관 쪽)", use: "서재 — 기존 장 활용", note: "기존 장에 책·서류 수납 → 책장 불필요. 책상은 창을 등지지 않게 측면 배치." },
+    { where: "작은방 B", use: "미정 — 비워둘 것", note: "당장 채우지 않음. 6개월 살아본 뒤 실제 용도가 정해지면 그때 구입." },
+    { where: "거실", use: "소파 + TV — 나중에", note: "현관에서 창까지 세로로 긴 형태. 긴 벽에 소파를 붙이면 통로가 막힘. 짧은 벽에 소파, 맞은편에 TV. 실측 후 구입." },
+    { where: "주방 / 식당", use: "가스레인지 + 오븐 완비", note: "조리 가전 추가 구입 거의 없음. 냉장고 자리 폭만 실측하면 됨." },
+    { where: "세탁 발코니", use: "세탁기 · 빨래건조대", note: "폭 130cm 이상이면 나중에 건조기를 나란히 배치 가능. 미만이면 위아래 직렬." },
+    { where: "안방 발코니", use: "에어컨 실외기 전용 구역", note: "설치 수월. 실외기 통풍구는 막지 말 것." },
+    { where: "욕실 2개", use: "그대로 사용 — 추가 작업 없음", note: "붙박이 거울과 수건 수납장 있음. 줄눈 완료. 욕조 유지. 수건과 발매트만 준비." }
+  ];
+
+  const TIMELINE = [
+    { when: "8/17 (계약일)", what: "잔금일 확정", detail: "모든 일정의 기준점. 사전 실측 방문이 가능한지도 함께 확인." },
+    { when: "잔금 -6주", what: "실측 + 도배 견적", detail: "0번 섹션 치수를 한 번에 측정. 같은 날 도배 업체 견적. 벽지 샘플 선정." },
+    { when: "잔금 -5주", what: "도배 일정 예약", detail: "잔금일 이후로만 시공 가능. 성수기에는 2~3주 전 예약 마감." },
+    { when: "잔금 -4주", what: "가전 3종 계약", detail: "냉장고·세탁기·에어컨. 매장에서 묶어 계약하고 배송일만 도배 이후로 지정." },
+    { when: "잔금 -3주", what: "침대 · 식탁 주문", detail: "배송 2~3주 소요. 매트리스는 매장에서 직접 누워보고 결정." },
+    { when: "잔금일", what: "열쇠 수령 → 도배 시작", detail: "빈집일 때 가장 빠르고 저렴. 2~3일 소요." },
+    { when: "도배 직후", what: "커튼 → 입주청소", detail: "순서 엄수. 청소를 먼저 하면 도배 먼지로 재작업." },
+    { when: "청소 다음날", what: "에어컨 → 가전 → 침대·식탁", detail: "에어컨은 타공·배관 작업이 있어 최우선." },
+    { when: "입주 후", what: "살면서 추가 구입", detail: "소파·TV는 배치 확정 후. 건조기·식기세척기·로봇청소기는 불편함을 느끼는 시점에." }
+  ];
+
+  const TIPS = [
+    { b: "안 사고 버텨보기", s: "빨래건조대로 건조기를, 무선청소기로 로봇청소기를, 손설거지로 식기세척기를 대체 가능. 3개월 살아보고 진짜 불편한 것만 구입." },
+    { b: "가전 3종만 묶어서 계약", s: "냉장고·세탁기·에어컨만으로도 매장 묶음 할인 적용됨. 품목이 적어도 혼수 고객 등록은 해둘 것." },
+    { b: "가격 먼저 잠그고 배송은 나중에", s: "계약만 먼저 하고 배송일은 도배 이후로 지정. 프로모션이 좋은 시점에 가격을 확정할 수 있음." },
+    { b: "도배는 합지로 시작", s: "실크 대비 30~40% 저렴. 초기 예산 절감 효과 큼. 나중에 실크로 재시공해도 늦지 않음." },
+    { b: "에어컨은 비수기 설치", s: "5~7월은 기사 부족으로 설치비 상승·대기 발생. 8월 하순~9월이 유리." },
+    { b: "최저가 시즌 활용", s: "추석 직전(9월 하순)과 코리아세일페스타(11월). 잔금일이 가을 이후면 이 시기를 노릴 것." },
+    { b: "중고 · 전시품 활용", s: "소파·식탁·TV는 전시품이나 중고도 무방. 매트리스와 침구만 새것으로." }
+  ];
+
+  const P_LABEL = { must: "입주 전", rec: "1~3개월", opt: "나중에" };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmt = n => n.toLocaleString("ko-KR");
+
+  document.getElementById("tiers").innerHTML = TIERS.map(t => `
+    <div class="tier${t.target ? " is-target" : ""}">
+      <div class="tier-name">${esc(t.name)}</div>
+      <div class="tier-sum">${esc(t.sum)}</div>
+      <div class="tier-note">${esc(t.note)}</div>
+    </div>`).join("");
+
+  document.getElementById("confirmed").innerHTML = CONFIRMED.map(c => `
+    <div class="conf">
+      <div class="conf-what">${esc(c.what)}</div>
+      <div class="conf-note">${esc(c.note)}</div>
+      <div class="conf-amt ${c.kind}">${esc(c.amt)}</div>
+    </div>`).join("");
+
+  (function () {
+    let save = 0, add = 0;
+    for (const c of CONFIRMED) {
+      const v = parseInt(String(c.amt).replace(/[^0-9]/g, ""), 10);
+      if (!v) continue;
+      if (c.kind === "save") save += v;
+      else if (c.kind === "add") add += v;
+    }
+    document.getElementById("netline").innerHTML =
+      `<span>절약 <b class="s">−${fmt(save)}만원</b></span>` +
+      `<span>추가 <b class="a">+${fmt(add)}만원</b></span>` +
+      `<span>순 변동 <b>${save >= add ? "−" : "+"}${fmt(Math.abs(save - add))}만원</b></span>`;
+  })();
+
+  document.getElementById("rooms").innerHTML = ROOMS.map(r => `
+    <div class="room">
+      <div class="room-where">${esc(r.where)}</div>
+      <div class="room-use">${esc(r.use)}</div>
+      <div class="room-note">${esc(r.note)}</div>
+    </div>`).join("");
+
+  document.getElementById("sections").innerHTML = SECTIONS.map((sec, si) => {
+    const secTotal = sec.items.filter(i => i.p === M).reduce((a, i) => a + i.cost, 0);
+    const rows = sec.items.map((it, ii) => `
+      <label class="row">
+        <input type="checkbox" data-cost="${it.cost}" data-p="${it.p}" data-key="${esc(it.name)}" id="i${si}-${ii}">
+        <span class="r-name">
+          ${esc(it.name)}
+          <span class="tag ${it.p}">${P_LABEL[it.p]}</span>
+          ${it.bi ? '<span class="tag bi">빌트인 확인</span>' : ""}
+        </span>
+        ${it.spec ? `<span class="r-spec">${esc(it.spec)}</span>` : ""}
+        <span class="r-cost">${it.cost ? fmt(it.cost) + " <small>만원</small>" : "<small>확인만</small>"}</span>
+      </label>`).join("");
+
+    return `
+      <section class="section">
+        <div class="section-head">
+          <h2>${esc(sec.t)}</h2>
+          ${sec.n ? `<p class="sec-note">${esc(sec.n)}</p>` : '<p class="sec-note"></p>'}
+          ${secTotal ? `<span class="sec-sum">입주 전 ${fmt(secTotal)}만원</span>` : ""}
+        </div>
+        <div class="rows">${rows}</div>
+      </section>`;
+  }).join("");
+
+  document.getElementById("timeline").innerHTML = TIMELINE.map(s => `
+    <div class="tl-step">
+      <div class="tl-when">${esc(s.when)}</div>
+      <div class="tl-what">${esc(s.what)}</div>
+      <div class="tl-detail">${esc(s.detail)}</div>
+    </div>`).join("");
+
+  document.getElementById("tips").innerHTML = TIPS.map(t => `
+    <div class="tip"><b>${esc(t.b)}</b><span>${esc(t.s)}</span></div>`).join("");
+
+  const boxes = Array.from(document.querySelectorAll(".row input"));
+  const totalEl = document.getElementById("total");
+  const countEl = document.getElementById("count");
+
+  function recalc() {
+    let sum = 0, n = 0;
+    for (const b of boxes) {
+      if (b.checked) { sum += Number(b.dataset.cost); n++; }
+    }
+    totalEl.textContent = fmt(sum);
+    countEl.textContent = n + "개 선택";
+  }
+
+  boxes.forEach(b => b.addEventListener("change", () => { recalc(); push(); }));
+
+  document.querySelectorAll(".qbtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const set = btn.dataset.set;
+      boxes.forEach(b => {
+        const p = b.dataset.p;
+        if (set === "all") b.checked = true;
+        else if (set === "none") b.checked = false;
+        else if (set === "must") b.checked = p === "must";
+        else if (set === "rec") b.checked = p === "must" || p === "rec";
+      });
+      recalc();
+      push();
+    });
+  });
+
+  /* ---------- 두 사람 간 체크 상태 동기화 ---------- */
+
+  const SYNC_URL = "https://jsonblob.com/api/jsonBlob/019fe994-2363-7875-86e3-c59fa27b47b4";
+  const POLL_MS = 3000;
+  const statusEl = document.getElementById("syncstate");
+
+  let lastSeen = -1;        // 마지막으로 반영한 서버 갱신 시각
+  let pushTimer = null;     // 연속 클릭 묶기
+  let suppress = false;     // 서버 반영 중 push 방지
+
+  const me = (() => {
+    let v = null;
+    try { v = localStorage.getItem("who"); } catch (e) {}
+    if (!v) {
+      v = "기기" + Math.floor(Math.random() * 900 + 100);
+      try { localStorage.setItem("who", v); } catch (e) {}
+    }
+    return v;
+  })();
+
+  function setStatus(text, cls) {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.className = "syncstate " + (cls || "");
+  }
+
+  function apply(state) {
+    suppress = true;
+    const on = new Set(state.checked || []);
+    boxes.forEach(b => { b.checked = on.has(b.dataset.key); });
+    recalc();
+    suppress = false;
+  }
+
+  function snapshot() {
+    return boxes.filter(b => b.checked).map(b => b.dataset.key);
+  }
+
+  async function pull(initial) {
+    try {
+      const r = await fetch(SYNC_URL, { cache: "no-store" });
+      if (!r.ok) throw new Error(r.status);
+      const s = await r.json();
+      const t = Number(s.updatedAt) || 0;
+      if (initial && t === 0) {          // 아무도 저장한 적 없음 → 기본값 유지
+        lastSeen = 0;
+        setStatus("연결됨", "ok");
+        return;
+      }
+      if (t > lastSeen) {
+        lastSeen = t;
+        apply(s);
+        setStatus(initial ? "연결됨" : "갱신됨 · " + (s.by === me ? "내 변경" : "상대방 변경"), "ok");
+      } else {
+        setStatus("연결됨", "ok");
+      }
+    } catch (e) {
+      setStatus("오프라인 — 이 기기에만 저장", "off");
+    }
+  }
+
+  function push() {
+    if (suppress) return;
+    setStatus("저장 중…", "busy");
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(async () => {
+      const now = Date.now();
+      try {
+        const r = await fetch(SYNC_URL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checked: snapshot(), updatedAt: now, by: me })
+        });
+        if (!r.ok) throw new Error(r.status);
+        lastSeen = now;
+        setStatus("저장됨", "ok");
+      } catch (e) {
+        setStatus("저장 실패 — 잠시 후 재시도", "off");
+      }
+    }, 600);
+  }
+
+  boxes.forEach(b => { b.checked = b.dataset.p === "must"; });
+  recalc();
+
+  pull(true);
+  setInterval(() => { if (!document.hidden) pull(false); }, POLL_MS);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) pull(false); });
+</script>
+
+</body>
+</html>
