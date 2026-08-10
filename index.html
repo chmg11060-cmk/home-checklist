@@ -285,12 +285,49 @@
   }
 
   .section-head {
-    padding: 20px 22px 16px;
+    padding: 20px 46px 16px 22px;
     border-bottom: 1px solid var(--line-soft);
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 6px 14px;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    transition: background .12s ease;
+  }
+
+  .section-head:hover { background: var(--surface-2); }
+  .section-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .chev {
+    position: absolute;
+    right: 20px;
+    top: 25px;
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid var(--ink-3);
+    border-bottom: 2px solid var(--ink-3);
+    transform: rotate(45deg);
+    transition: transform .18s ease;
+  }
+
+  .section.collapsed .chev { transform: rotate(-45deg) translate(-2px, 2px); }
+  .section.collapsed .section-head { border-bottom: 0; }
+
+  .section.collapsed .rows,
+  .section.collapsed .confs,
+  .section.collapsed .netline,
+  .section.collapsed .rooms,
+  .section.collapsed .timeline,
+  .section.collapsed .tips { display: none; }
+
+  .sec-count {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   .section-head h2 {
@@ -768,6 +805,7 @@
       <button class="qbtn" type="button" data-set="rec">+ 1~3개월</button>
       <button class="qbtn" type="button" data-set="all">전체 선택</button>
       <button class="qbtn" type="button" data-set="none">모두 해제</button>
+      <button class="qbtn" type="button" id="foldall">전체 접기</button>
       <a class="qbtn golink" href="check.html">구매 체크리스트 →</a>
     </div>
   </div>
@@ -775,18 +813,20 @@
   <div class="tiers" id="tiers"></div>
 
   <section class="section">
-    <div class="section-head">
+    <div class="section-head" data-sec="confirmed" tabindex="0" role="button">
       <h2>현장 확인 결과</h2>
       <p class="sec-note">직접 보고 확인한 내용 — 아래 체크리스트에 반영 완료</p>
+      <span class="chev"></span>
     </div>
     <div class="confs" id="confirmed"></div>
     <div class="netline" id="netline"></div>
   </section>
 
   <section class="section">
-    <div class="section-head">
+    <div class="section-head" data-sec="rooms" tabindex="0" role="button">
       <h2>공간 배치</h2>
       <p class="sec-note">각 방 용도 먼저 확정 → 살 가구 결정</p>
+      <span class="chev"></span>
     </div>
     <div class="rooms" id="rooms"></div>
   </section>
@@ -794,17 +834,19 @@
   <main id="sections" style="display:flex; flex-direction:column; gap:24px;"></main>
 
   <section class="section">
-    <div class="section-head">
+    <div class="section-head" data-sec="timeline" tabindex="0" role="button">
       <h2>구매 타임라인</h2>
       <p class="sec-note">잔금일 기준 역산 — 잔금일 확정 후 실제 날짜 기입</p>
+      <span class="chev"></span>
     </div>
     <div class="timeline" id="timeline"></div>
   </section>
 
   <section class="section">
-    <div class="section-head">
+    <div class="section-head" data-sec="tips" tabindex="0" role="button">
       <h2>비용 절감</h2>
       <p class="sec-note">같은 물건 더 싸게 사는 법</p>
+      <span class="chev"></span>
     </div>
     <div class="tips" id="tips"></div>
   </section>
@@ -1224,10 +1266,12 @@
 
       return `
         <section class="section">
-          <div class="section-head">
+          <div class="section-head" data-sec="s${si}" tabindex="0" role="button">
             <h2>${esc(sec.t)}</h2>
             ${sec.n ? `<p class="sec-note">${esc(sec.n)}</p>` : '<p class="sec-note"></p>'}
+            <span class="sec-count">${sec.items.filter(i => !removed.has(i.name)).length + customItems.filter(c => c.sec === si).length}개</span>
             <span class="sec-sum" id="ss-${si}"></span>
+            <span class="chev"></span>
           </div>
           <div class="rows">
             ${rows}
@@ -1306,7 +1350,66 @@
     renderSections();
     renderCustom();
     updateSecSums();
+    applyCollapsed();   // 다시 그린 뒤 접힘 상태 복원
   }
+
+  /* ---------- 섹션 접기 · 펼치기 ---------- */
+
+  const COLLAPSE_KEY = "collapsed";
+
+  function loadCollapsed() {
+    try { return new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || "[]")); }
+    catch (e) { return new Set(); }
+  }
+
+  function saveCollapsed(set) {
+    try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(Array.from(set))); } catch (e) {}
+  }
+
+  let collapsed = loadCollapsed();
+
+  function applyCollapsed() {
+    document.querySelectorAll(".section-head[data-sec]").forEach(h => {
+      const sec = h.closest(".section");
+      const on = collapsed.has(h.dataset.sec);
+      sec.classList.toggle("collapsed", on);
+      h.setAttribute("aria-expanded", on ? "false" : "true");
+    });
+    const btn = document.getElementById("foldall");
+    if (btn) {
+      const heads = document.querySelectorAll(".section-head[data-sec]");
+      btn.textContent = collapsed.size >= heads.length ? "전체 펼치기" : "전체 접기";
+    }
+  }
+
+  function toggleSection(head) {
+    const k = head.dataset.sec;
+    if (collapsed.has(k)) collapsed.delete(k); else collapsed.add(k);
+    saveCollapsed(collapsed);
+    applyCollapsed();
+  }
+
+  document.addEventListener("click", e => {
+    const head = e.target.closest(".section-head[data-sec]");
+    if (head) { toggleSection(head); return; }
+
+    const all = e.target.closest("#foldall");
+    if (all) {
+      const heads = Array.from(document.querySelectorAll(".section-head[data-sec]"));
+      if (collapsed.size >= heads.length) collapsed.clear();
+      else heads.forEach(h => collapsed.add(h.dataset.sec));
+      saveCollapsed(collapsed);
+      applyCollapsed();
+    }
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const head = e.target.closest(".section-head[data-sec]");
+    if (!head) return;
+    e.preventDefault();
+    toggleSection(head);
+  });
 
   /* 행 전체 클릭으로 체크 (버튼·입력칸 제외) */
   document.addEventListener("click", e => {
@@ -1322,7 +1425,7 @@
     if (e.target.matches('.row input[type="checkbox"]')) { recalc(); push(); }
   });
 
-  document.querySelectorAll(".qbtn").forEach(btn => {
+  document.querySelectorAll(".qbtn[data-set]").forEach(btn => {
     btn.addEventListener("click", () => {
       const set = btn.dataset.set;
       getBoxes().forEach(b => {
