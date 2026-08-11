@@ -177,6 +177,10 @@
 
 <script>
   const M = "must", R = "rec", O = "opt";
+
+  /* 금액은 LG 공식몰(lge.co.kr) 2026-08-10 확인한 회원할인가만 기재.
+     그 외 항목은 금액 없음(0). 추정치는 넣지 않음. */
+
   const SECTIONS = [
     {
       t: "0. 실측할 치수",
@@ -409,8 +413,22 @@
   ];
 
 
-  const SYNC_URL = "https://jsonblob.com/api/jsonBlob/019fe994-2363-7875-86e3-c59fa27b47b4";
+  const SYNC_URL = "https://jsonblob.com/api/jsonBlob/019fefd4-8e6a-7b19-9d98-6a9ab8ed782d";
   const POLL_MIN = 15000, POLL_MAX = 90000;
+  const LOCAL_KEY = "hc_backup_v1";   // 서버 저장소가 사라져도 남는 기기 안 사본
+
+  /* 저장소가 통째로 사라진 적이 있어(2026-08-11) 기기에도 사본을 남긴다 */
+  function saveLocal(state) {
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(LOCAL_KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      return (s && typeof s === "object") ? s : null;
+    } catch (e) { return null; }
+  }
 
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
@@ -517,18 +535,42 @@
       remoteState = s;
       const t = Number(s.updatedAt) || 0;
 
+      // 서버가 비어 있는데 기기 사본이 더 최신 → 저장소가 날아간 것이므로 되살린다
+      const bak = initial ? loadLocal() : null;
+      if (bak && (Number(bak.updatedAt) || 0) > t) {
+        remoteState = Object.assign({}, s, bak);
+        bought = new Set(Array.isArray(bak.bought) ? bak.bought : []);
+        rows = buildRows(remoteState);
+        render();
+        lastSeen = -1;
+        setSync("기기 사본으로 복구 중…", "busy");
+        send(0);
+        schedulePoll();
+        return;
+      }
+
       if (initial || t > lastSeen) {
         lastSeen = t;
         bought = new Set(Array.isArray(s.bought) ? s.bought : []);
         rows = buildRows(s);
         render();
+        saveLocal(s);
         setSync(initial ? "연결됨" : (s.by === me ? "동기화됨" : "상대방이 변경함"), "ok");
       } else {
         setSync("연결됨", "ok");
       }
       if (pendingPush) { pendingPush = false; push(); }
     } catch (e) {
-      setSync("오프라인", "");
+      const bak = initial ? loadLocal() : null;     // 서버가 죽어도 마지막 상태는 보여준다
+      if (bak) {
+        remoteState = bak;
+        bought = new Set(Array.isArray(bak.bought) ? bak.bought : []);
+        rows = buildRows(bak);
+        render();
+        setSync("오프라인 — 기기 사본", "");
+      } else {
+        setSync("오프라인", "");
+      }
     }
     schedulePoll();
   }
@@ -542,13 +584,15 @@
 
   async function send(attempt) {
     const now = Date.now();
+    const state = Object.assign({}, remoteState, {
+      bought: Array.from(bought), updatedAt: now, by: me
+    });
+    saveLocal(state);                               // 보내기 전에 기기에 먼저 남긴다
     try {
       const r = await fetch(SYNC_URL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(Object.assign({}, remoteState, {
-          bought: Array.from(bought), updatedAt: now, by: me
-        }))
+        body: JSON.stringify(state)
       });
       if (r.status === 429) {
         if (attempt < 4) {
