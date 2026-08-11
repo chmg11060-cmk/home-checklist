@@ -423,7 +423,11 @@
   ];
 
 
-  const SYNC_URL = "https://jsonblob.com/api/jsonBlob/019fefd4-8e6a-7b19-9d98-6a9ab8ed782d";
+  /* 저장소 2곳에 같은 내용을 보관한다. 한 곳이 사라져도 나머지로 계속 동기화됨 */
+  const SYNC_URLS = [
+    "https://jsonblob.com/api/jsonBlob/019fefd4-8e6a-7b19-9d98-6a9ab8ed782d",    // 주
+    "https://jsonblob.com/api/jsonBlob/019feff0-0662-7dbd-87f8-c7a044fc2696"    // 보조
+  ];
   const POLL_MIN = 15000, POLL_MAX = 90000;
   const LOCAL_KEY = "hc_backup_v1";   // 서버 저장소가 사라져도 남는 기기 안 사본
 
@@ -530,58 +534,94 @@
     pollTimer = setTimeout(() => { document.hidden ? schedulePoll() : pull(false); }, pollMs);
   }
 
+  /* 저장소 2곳을 동시에 읽는다 */
+  function readAll() {
+    return Promise.all(SYNC_URLS.map(async (u) => {
+      try {
+        const r = await fetch(u, { cache: "no-store" });
+        if (r.status === 429) return { u: u, limited: true };
+        if (!r.ok) return { u: u, dead: true };
+        const s = await r.json();
+        return (s && typeof s === "object") ? { u: u, state: s } : { u: u, dead: true };
+      } catch (e) {
+        return { u: u, dead: true };
+      }
+    }));
+  }
+
+  /* 뒤처진 저장소를 최신 내용으로 조용히 맞춘다 (updatedAt은 새로 찍지 않음) */
+  function healStores(state) {
+    const body = JSON.stringify(state);
+    SYNC_URLS.forEach(u => {
+      fetch(u, { method: "PUT", headers: { "Content-Type": "application/json" }, body: body }).catch(() => {});
+    });
+  }
+
+  function showState(s) {
+    bought = new Set(Array.isArray(s.bought) ? s.bought : []);
+    rows = buildRows(s);
+    render();
+  }
+
   async function pull(initial) {
-    try {
-      const r = await fetch(SYNC_URL, { cache: "no-store" });
-      if (r.status === 429) {
+    const res = await readAll();
+    const live = res.filter(x => x.state);
+
+    if (!live.length) {                             // 두 곳 다 못 읽음
+      if (res.some(x => x.limited)) {
         pollMs = Math.min(pollMs * 2, POLL_MAX);
         setSync("동기화 지연 중", "busy");
-        schedulePoll(); return;
-      }
-      if (!r.ok) throw new Error(r.status);
-      pollMs = POLL_MIN;
-
-      const s = await r.json();
-      remoteState = s;
-      const t = Number(s.updatedAt) || 0;
-
-      // 서버가 비어 있는데 기기 사본이 더 최신 → 저장소가 날아간 것이므로 되살린다
-      const bak = initial ? loadLocal() : null;
-      if (bak && (Number(bak.updatedAt) || 0) > t) {
-        remoteState = Object.assign({}, s, bak);
-        bought = new Set(Array.isArray(bak.bought) ? bak.bought : []);
-        rows = buildRows(remoteState);
-        render();
-        lastSeen = -1;
-        setSync("기기 사본으로 복구 중…", "busy");
-        send(0);
-        schedulePoll();
-        return;
-      }
-
-      if (initial || t > lastSeen) {
-        lastSeen = t;
-        bought = new Set(Array.isArray(s.bought) ? s.bought : []);
-        rows = buildRows(s);
-        render();
-        saveLocal(s);
-        setSync(initial ? "연결됨" : (s.by === me ? "동기화됨" : "상대방이 변경함"), "ok");
       } else {
-        setSync("연결됨", "ok");
+        const bak = initial ? loadLocal() : null;   // 서버가 죽어도 마지막 상태는 보여준다
+        if (bak) {
+          remoteState = bak;
+          showState(bak);
+          setSync("오프라인 — 기기 사본", "");
+        } else {
+          setSync("오프라인", "");
+        }
       }
-      if (pendingPush) { pendingPush = false; push(); }
-    } catch (e) {
-      const bak = initial ? loadLocal() : null;     // 서버가 죽어도 마지막 상태는 보여준다
-      if (bak) {
-        remoteState = bak;
-        bought = new Set(Array.isArray(bak.bought) ? bak.bought : []);
-        rows = buildRows(bak);
-        render();
-        setSync("오프라인 — 기기 사본", "");
-      } else {
-        setSync("오프라인", "");
-      }
+      schedulePoll();
+      return;
     }
+
+    pollMs = POLL_MIN;
+
+    let best = live[0];                             // 살아있는 곳 중 가장 최신 내용을 쓴다
+    live.forEach(x => {
+      if ((Number(x.state.updatedAt) || 0) > (Number(best.state.updatedAt) || 0)) best = x;
+    });
+    const s = best.state;
+    const t = Number(s.updatedAt) || 0;
+    const dead = res.length - live.length;
+    const tail = dead ? " (저장소 " + dead + "곳 응답 없음)" : "";
+
+    // 기기 사본이 더 최신 → 저장소가 비워졌던 것이므로 사본으로 되살린다
+    const bak = initial ? loadLocal() : null;
+    if (bak && (Number(bak.updatedAt) || 0) > t) {
+      remoteState = Object.assign({}, s, bak);
+      showState(remoteState);
+      lastSeen = -1;
+      setSync("기기 사본으로 복구 중…", "busy");
+      send(0);
+      schedulePoll();
+      return;
+    }
+
+    remoteState = s;
+
+    if (live.some(x => (Number(x.state.updatedAt) || 0) < t)) healStores(s);
+
+    if (initial || t > lastSeen) {
+      lastSeen = t;
+      showState(s);
+      saveLocal(s);
+      setSync((initial ? "연결됨" : (s.by === me ? "동기화됨" : "상대방이 변경함")) + tail, dead ? "busy" : "ok");
+    } else {
+      setSync("연결됨" + tail, dead ? "busy" : "ok");
+    }
+
+    if (pendingPush) { pendingPush = false; push(); }
     schedulePoll();
   }
 
@@ -598,27 +638,38 @@
       bought: Array.from(bought), updatedAt: now, by: me
     });
     saveLocal(state);                               // 보내기 전에 기기에 먼저 남긴다
-    try {
-      const r = await fetch(SYNC_URL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(state)
-      });
-      if (r.status === 429) {
-        if (attempt < 4) {
-          const w = Math.min(4000 * Math.pow(2, attempt), 60000);
-          setSync("저장 대기 (" + Math.round(w/1000) + "초)", "busy");
-          setTimeout(() => send(attempt + 1), w);
-        } else { pendingPush = true; setSync("저장 지연 — 재시도 예약", "busy"); }
-        return;
+
+    const body = JSON.stringify(state);
+    const results = await Promise.all(SYNC_URLS.map(async (u) => {   // 두 곳 모두에 저장
+      try {
+        const r = await fetch(u, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: body
+        });
+        return r.status === 429 ? "limited" : (r.ok ? "ok" : "fail");
+      } catch (e) {
+        return "fail";
       }
-      if (!r.ok) throw new Error(r.status);
-      lastSeen = now;
-      setSync("저장됨", "ok");
-    } catch (e) {
-      pendingPush = true;
-      setSync("저장 실패 — 재시도 예약", "");
+    }));
+
+    const okCount = results.filter(x => x === "ok").length;
+
+    if (!okCount) {                                 // 한 곳도 저장 못 함
+      if (results.indexOf("limited") >= 0 && attempt < 4) {
+        const w = Math.min(4000 * Math.pow(2, attempt), 60000);
+        setSync("저장 대기 (" + Math.round(w/1000) + "초)", "busy");
+        setTimeout(() => send(attempt + 1), w);
+      } else {
+        pendingPush = true;
+        setSync("저장 실패 — 재시도 예약", "");
+      }
+      return;
     }
+
+    lastSeen = now;
+    remoteState = state;
+    setSync(okCount === SYNC_URLS.length ? "저장됨" : "저장됨 (저장소 1곳 응답 없음)", "ok");
   }
 
   /* 스크립트가 죽으면 빈 화면 대신 원인을 보여준다 */
