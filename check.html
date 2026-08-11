@@ -147,6 +147,16 @@
 
   body.hidedone .item.done { display: none; }
 
+  /* 모바일: 아래로 스크롤하면 상단 바를 접어 화면을 넓게 쓴다. 위로 올리면 다시 펼쳐짐 */
+  @media (max-width: 620px) {
+    .bar { transition: padding .18s ease, gap .18s ease; }
+    body.barmini .bar { padding: 7px 14px; gap: 6px 12px; }
+    body.barmini .bar .tog,
+    body.barmini .bar a.back { display: none; }
+    body.barmini .prog .n { font-size: 18px; }
+    body.barmini .prog .d { font-size: 12px; }
+  }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -627,6 +637,27 @@
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) { pollMs = POLL_MIN; clearTimeout(pollTimer); pull(false); }
   });
+
+  /* 모바일에서 아래로 스크롤하면 상단 바를 접는다 (위로 올리면 원래대로) */
+  (function () {
+    let lastY = window.scrollY || 0;
+    let ticking = false;
+
+    function update() {
+      const y = window.scrollY || 0;
+      if (y < 90) document.body.classList.remove("barmini");
+      else if (y > lastY + 6) document.body.classList.add("barmini");
+      else if (y < lastY - 6) document.body.classList.remove("barmini");
+      lastY = y;
+      ticking = false;
+    }
+
+    window.addEventListener("scroll", () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }, { passive: true });
+  })();
 </script>
 
 </body>
