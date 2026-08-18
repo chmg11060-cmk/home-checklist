@@ -533,6 +533,7 @@
   @media (max-width: 620px) {
     .addwrap { padding-left: 16px; padding-right: 16px; }
     .af-name, .af-spec, .af-cost, .af-p { flex: 1 1 100%; }
+    .ef-name, .ef-spec, .ef-cost, .ef-p { flex: 1 1 100%; }
   }
 
   .row input {
@@ -793,7 +794,7 @@
 
   @media (max-width: 620px) {
     .masthead { padding-top: 36px; }
-    .row { grid-template-columns: 24px minmax(0, 1fr); grid-template-areas: "box name" ". spec" ". cost"; padding: 13px 16px; }
+    .row { grid-template-columns: 24px minmax(0, 1fr) auto; grid-template-areas: "box name act" ". spec act" ". cost act"; padding: 13px 16px; }
     .r-cost { align-self: start; padding-top: 4px; }
     .section-head, .tl-step, .tip { padding-left: 16px; padding-right: 16px; }
     .tl-step { grid-template-columns: 1fr; }
@@ -1977,17 +1978,22 @@
     rd.readAsText(f);
   });
 
-  /* 모바일에서 아래로 스크롤하면 상단 바를 접는다 (위로 올리면 원래대로) */
+  /* 모바일에서 아래로 스크롤하면 상단 바를 접는다.
+     ⚠️ 스크롤 "방향"으로 토글하면 안 된다 (2026-08-18 실제 버그):
+        ① 모바일 브라우저는 주소창이 접혔다 펴질 때마다 작은 스크롤 이벤트를 양방향으로 쏟아낸다
+        ② 바가 접히면 문서 높이가 줄어 스크롤이 보정되고, 그 보정이 다시 scroll 이벤트를 만든다
+        → ±6px 방향 판정으로는 접힘/펼침이 무한 반복되며 본문을 가린다.
+     그래서 방향이 아니라 "절대 위치 + 넓은 히스테리시스"로만 판단한다.
+     접기 280px / 펴기 100px — 간격 180px가 바 높이 변화량보다 크므로 되먹임이 성립하지 않는다. */
   (function () {
-    let lastY = window.scrollY || 0;
+    const FOLD = 280, UNFOLD = 100;
     let ticking = false;
 
     function update() {
       const y = window.scrollY || 0;
-      if (y < 90) document.body.classList.remove("barmini");
-      else if (y > lastY + 6) document.body.classList.add("barmini");
-      else if (y < lastY - 6) document.body.classList.remove("barmini");
-      lastY = y;
+      const mini = document.body.classList.contains("barmini");
+      if (!mini && y > FOLD) document.body.classList.add("barmini");
+      else if (mini && y < UNFOLD) document.body.classList.remove("barmini");
       ticking = false;
     }
 
@@ -1996,6 +2002,8 @@
       ticking = true;
       requestAnimationFrame(update);
     }, { passive: true });
+
+    update();
   })();
 </script>
 
