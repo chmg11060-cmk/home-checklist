@@ -212,6 +212,15 @@
   .syncstate.busy  { color: var(--warn); }
   .syncstate.busy::before  { background: var(--warn); }
   .syncstate.off   { color: var(--ink-3); }
+  .syncstate.warn  { color: var(--warn); font-weight: 600; }
+  .syncstate.warn::before  { background: var(--warn); }
+
+  .savegroup { display: inline-flex; gap: 6px; margin-left: 10px; }
+  .savebtn { font-weight: 700; padding: 6px 16px; }
+  .savebtn:disabled { opacity: .45; cursor: default; }
+  .savebtn:disabled:hover { background: var(--surface-2); color: var(--ink-2); border-color: var(--line); }
+  .savebtn.dirty { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .savebtn.dirty:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--surface); }
 
   .quickset { display: flex; flex-wrap: wrap; gap: 7px; }
 
@@ -810,6 +819,8 @@
     body.barmini .total-figure .num { font-size: 18px; }
     body.barmini .total-figure .count,
     body.barmini .syncstate { font-size: 11px; }
+    body.barmini .savebtn { padding: 4px 12px; font-size: 12px; }
+    body.barmini #reloadbtn { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -840,7 +851,11 @@
       <span class="num" id="total">0</span>
       <span class="unit">만원</span>
       <span class="count" id="count">0개 선택</span>
-      <span class="syncstate" id="syncstate">연결 중…</span>
+      <span class="syncstate" id="syncstate">불러오는 중…</span>
+      <span class="savegroup">
+        <button class="qbtn savebtn" type="button" id="savebtn" disabled>저장</button>
+        <button class="qbtn" type="button" id="reloadbtn" title="서버에 저장된 최신 내용을 다시 불러옴">↻</button>
+      </span>
     </div>
     <div class="quickset">
       <button class="qbtn" type="button" data-set="must">입주 전만</button>
@@ -899,12 +914,14 @@
     <div class="bk-row">
       <button class="qbtn" type="button" id="expbtn">백업 파일로 내보내기</button>
       <button class="qbtn" type="button" id="impbtn">파일에서 되돌리기</button>
+      <button class="qbtn" type="button" id="tokenbtn">GitHub 토큰 설정</button>
       <input type="file" id="impfile" accept="application/json,.json" hidden>
       <span class="bk-msg" id="bkmsg"></span>
     </div>
     <p class="bk-note">
       체크 상태·추가한 항목·수정 내용·실측값·구매 완료 표시가 모두 파일 하나에 담김.
-      되돌리면 지금 상태를 덮어쓰고 두 사람 모두에게 반영됨.
+      되돌리면 지금 상태를 덮어쓰고 바로 저장됨.
+      저장은 GitHub 저장소(state.json)에 기록되며 기기마다 토큰을 한 번 입력해야 함.
     </p>
   </div>
 
@@ -1609,19 +1626,15 @@
     getBoxes().forEach(b => { b.checked = on.has(b.dataset.key); });
   }
 
-  /* ---------- 두 사람 간 체크 상태 동기화 ---------- */
+  /* ---------- GitHub 저장 (수동 저장) ----------
+     jsonblob 저장소가 두 번(2026-08-11, 09-14) 통째로 사라져 GitHub 저장소의 state.json 으로 옮김.
+     자동 동기화 없음 — [저장] 버튼을 눌러야 서버(GitHub)에 기록된다.
+     쓰기에는 GitHub 토큰이 필요하며 기기별로 한 번 입력해 localStorage 에 보관한다 (페이지 소스에는 없음). */
+  const GH_OWNER = "chmg11060-cmk", GH_REPO = "home-checklist", GH_PATH = "state.json", GH_BRANCH = "main";
+  const GH_API = "https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + GH_PATH;
+  const TOKEN_KEY = "hc_gh_token";
+  const LOCAL_KEY = "hc_backup_v1";   // 서버를 못 읽을 때 보여줄 기기 안 사본
 
-  /* 저장소 2곳에 같은 내용을 보관한다. 한 곳이 사라져도 나머지로 계속 동기화됨 */
-  const SYNC_URLS = [
-    "https://jsonblob.com/api/jsonBlob/019fefd4-8e6a-7b19-9d98-6a9ab8ed782d",    // 주
-    "https://jsonblob.com/api/jsonBlob/019feff0-0662-7dbd-87f8-c7a044fc2696"    // 보조
-  ];
-  const POLL_MIN = 15000;   // 기본 폴링 주기
-  const POLL_MAX = 90000;   // 제한에 걸렸을 때 최대 대기
-  const LOCAL_KEY = "hc_backup_v1";   // 서버 저장소가 사라져도 남는 기기 안 사본
-  const statusEl = document.getElementById("syncstate");
-
-  /* 저장소가 통째로 사라진 적이 있어(2026-08-11) 기기에도 사본을 남긴다 */
   function saveLocal(state) {
     try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch (e) {}
   }
@@ -1633,14 +1646,58 @@
       return (s && typeof s === "object") ? s : null;
     } catch (e) { return null; }
   }
+  function getToken() { try { return (localStorage.getItem(TOKEN_KEY) || "").trim(); } catch (e) { return ""; } }
+  function askToken(msg) {
+    const v = prompt((msg ? msg + "\n\n" : "") +
+      "GitHub 토큰을 입력하세요 (이 기기에만 저장됨).\n" +
+      "github.com → Settings → Developer settings → Personal access tokens\n" +
+      "저장소 home-checklist 의 Contents: Read and write 권한", "");
+    if (v == null) return "";
+    const t = v.trim();
+    try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    return t;
+  }
 
-  let lastSeen = -1;        // 마지막으로 반영한 서버 갱신 시각
-  let pushTimer = null;     // 연속 클릭 묶기
-  let suppress = false;     // 서버 반영 중 push 방지
-  let pollMs = POLL_MIN;    // 현재 폴링 주기 (429 시 늘어남)
-  let pollTimer = null;
-  let pendingPush = false;  // 저장 실패분 재시도 대기
-  let remoteState = {};     // 마지막으로 받은 서버 상태 (다른 페이지 필드 보존용)
+  /* UTF-8 ↔ base64 (GitHub Contents API 는 base64 본문을 주고받는다) */
+  const b64enc = s => btoa(unescape(encodeURIComponent(s)));
+  const b64dec = s => decodeURIComponent(escape(atob(s.replace(/\s/g, ""))));
+
+  function ghHeaders() {
+    const h = { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+    const t = getToken();
+    if (t) h["Authorization"] = "Bearer " + t;
+    return h;
+  }
+
+  /* 서버의 state.json 을 읽는다. 없으면(404) 빈 상태 */
+  async function ghRead() {
+    const r = await fetch(GH_API + "?ref=" + GH_BRANCH + "&t=" + Date.now(), { headers: ghHeaders(), cache: "no-store" });
+    if (r.status === 404) return { sha: null, state: {} };
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    const s = JSON.parse(b64dec(j.content || "") || "{}");
+    return { sha: j.sha, state: (s && typeof s === "object") ? s : {} };
+  }
+
+  /* state.json 을 덮어쓴다. sha 가 어긋나면(상대가 그사이 저장) 409/422 */
+  async function ghWrite(state, sha, msg) {
+    const body = { message: msg, content: b64enc(JSON.stringify(state, null, 2)), branch: GH_BRANCH };
+    if (sha) body.sha = sha;
+    const r = await fetch(GH_API, { method: "PUT", headers: Object.assign(ghHeaders(), { "Content-Type": "application/json" }), body: JSON.stringify(body) });
+    if (r.ok) return (await r.json()).content.sha;
+    const err = new Error("HTTP " + r.status);
+    err.status = r.status;
+    throw err;
+  }
+
+  const statusEl = document.getElementById("syncstate");
+  const saveBtn  = document.getElementById("savebtn");
+
+  let sha = null;           // 서버 state.json 의 현재 버전
+  let dirty = false;        // 저장 안 한 변경이 있음
+  let saving = false;
+  let suppress = false;     // 서버 내용 반영 중 dirty 표시 방지
+  let remoteState = {};     // 마지막으로 받은 서버 상태 (체크리스트 페이지의 bought 보존용)
 
   const me = (() => {
     let v = null;
@@ -1707,154 +1764,115 @@
     return o;
   }
 
-  function schedulePoll() {
-    clearTimeout(pollTimer);
-    pollTimer = setTimeout(() => {
-      if (!document.hidden) pull(false);
-      else schedulePoll();
-    }, pollMs);
-  }
-
-  /* 저장소 2곳을 동시에 읽는다 */
-  function readAll() {
-    return Promise.all(SYNC_URLS.map(async (u) => {
-      try {
-        const r = await fetch(u, { cache: "no-store" });
-        if (r.status === 429) return { u: u, limited: true };
-        if (!r.ok) return { u: u, dead: true };
-        const s = await r.json();
-        return (s && typeof s === "object") ? { u: u, state: s } : { u: u, dead: true };
-      } catch (e) {
-        return { u: u, dead: true };
-      }
-    }));
-  }
-
-  /* 뒤처진 저장소를 최신 내용으로 조용히 맞춘다 (updatedAt은 새로 찍지 않음) */
-  function healStores(state) {
-    const body = JSON.stringify(state);
-    SYNC_URLS.forEach(u => {
-      fetch(u, { method: "PUT", headers: { "Content-Type": "application/json" }, body: body }).catch(() => {});
-    });
-  }
-
-  async function pull(initial) {
-    const res = await readAll();
-    const live = res.filter(x => x.state);
-
-    if (!live.length) {                             // 두 곳 다 못 읽음
-      if (res.some(x => x.limited)) {               // 요청 제한 → 주기를 늘려 재시도
-        pollMs = Math.min(pollMs * 2, POLL_MAX);
-        setStatus("동기화 지연 중 (재시도 대기)", "busy");
-      } else {
-        const bak = initial ? loadLocal() : null;   // 서버가 죽어도 마지막 상태는 보여준다
-        if (bak) {
-          remoteState = bak;
-          apply(bak);
-          setStatus("오프라인 — 기기에 저장된 사본 표시", "off");
-        } else {
-          setStatus("오프라인 — 이 기기에만 표시", "off");
-        }
-      }
-      schedulePoll();
-      return;
-    }
-
-    pollMs = POLL_MIN;                              // 성공 → 주기 원복
-
-    let best = live[0];                             // 살아있는 곳 중 가장 최신 내용을 쓴다
-    live.forEach(x => {
-      if ((Number(x.state.updatedAt) || 0) > (Number(best.state.updatedAt) || 0)) best = x;
-    });
-    const s = best.state;
-    const t = Number(s.updatedAt) || 0;
-    const dead = res.length - live.length;
-    const tail = dead ? " (저장소 " + dead + "곳 응답 없음)" : "";
-
-    // 기기 사본이 더 최신 → 저장소가 비워졌던 것이므로 사본으로 되살린다
-    const bak = initial ? loadLocal() : null;
-    if (bak && (Number(bak.updatedAt) || 0) > t) {
-      remoteState = Object.assign({}, s, bak);
-      apply(remoteState);
-      lastSeen = -1;
-      setStatus("기기 사본으로 복구 중…", "busy");
-      sendNow(0);
-      schedulePoll();
-      return;
-    }
-
-    remoteState = s;                                // 체크리스트 페이지의 bought 등을 보존
-
-    if (live.some(x => (Number(x.state.updatedAt) || 0) < t)) healStores(s);
-
-    if (initial && t === 0) {                       // 아무도 저장한 적 없음 → 기본값 유지
-      lastSeen = 0;
-      setStatus("연결됨" + tail, dead ? "busy" : "ok");
-    } else if (t > lastSeen) {
-      lastSeen = t;
-      apply(s);
-      saveLocal(s);
-      setStatus((initial ? "연결됨" : (s.by === me ? "동기화됨" : "상대방이 변경함")) + tail, dead ? "busy" : "ok");
-    } else {
-      setStatus("연결됨" + tail, dead ? "busy" : "ok");
-    }
-
-    if (pendingPush) { pendingPush = false; push(); }
-    schedulePoll();
-  }
-
-  function push() {
-    if (suppress) return;
-    setStatus("저장 중…", "busy");
-    clearTimeout(pushTimer);
-    pushTimer = setTimeout(() => sendNow(0), 600);
-  }
-
-  async function sendNow(attempt) {
-    const now = Date.now();
-    const state = Object.assign({}, remoteState, {
+  /* 이 페이지가 쓰는 필드만 얹는다 (bought 등 상대 페이지 필드는 remoteState 에서 보존) */
+  function currentState() {
+    return Object.assign({}, remoteState, {
       checked: snapshot(),
       values: snapshotValues(),
       custom: customItems,
       edits: edits,
-      removed: Array.from(removed),
-      updatedAt: now,
-      by: me
+      removed: Array.from(removed)
     });
-    saveLocal(state);                               // 보내기 전에 기기에 먼저 남긴다
-
-    const body = JSON.stringify(state);
-    const results = await Promise.all(SYNC_URLS.map(async (u) => {   // 두 곳 모두에 저장
-      try {
-        const r = await fetch(u, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: body
-        });
-        return r.status === 429 ? "limited" : (r.ok ? "ok" : "fail");
-      } catch (e) {
-        return "fail";
-      }
-    }));
-
-    const okCount = results.filter(x => x === "ok").length;
-
-    if (!okCount) {                                 // 한 곳도 저장 못 함
-      if (results.indexOf("limited") >= 0 && attempt < 4) {
-        const wait = Math.min(4000 * Math.pow(2, attempt), 60000);
-        setStatus("저장 대기 중 (" + Math.round(wait / 1000) + "초 후 재시도)", "busy");
-        setTimeout(() => sendNow(attempt + 1), wait);
-      } else {
-        pendingPush = true;
-        setStatus("저장 실패 — 자동 재시도 예약됨", "off");
-      }
-      return;
-    }
-
-    lastSeen = now;
-    remoteState = state;
-    setStatus(okCount === SYNC_URLS.length ? "저장됨" : "저장됨 (저장소 1곳 응답 없음)", "ok");
   }
+
+  function setDirty(on) {
+    dirty = on;
+    if (saveBtn) { saveBtn.disabled = !on || saving; saveBtn.classList.toggle("dirty", on); }
+    if (on) setStatus("저장 안 됨 — [저장]을 누르세요", "warn");
+  }
+
+  /* 항목을 바꾸면 곧바로 서버에 보내지 않고 "저장 안 됨" 표시만 한다 */
+  function push() {
+    if (suppress) return;
+    setDirty(true);
+  }
+
+  async function load(initial) {
+    setStatus("불러오는 중…", "busy");
+    try {
+      const r = await ghRead();
+      sha = r.sha;
+      remoteState = r.state;
+      // 기기 사본이 서버보다 최신(서버가 비었거나 되돌아간 경우) → 사본을 보여주고 저장을 권한다
+      const bak = initial ? loadLocal() : null;
+      if (bak && (Number(bak.updatedAt) || 0) > (Number(remoteState.updatedAt) || 0)) {
+        remoteState = Object.assign({}, remoteState, bak);
+        apply(remoteState);
+        setDirty(true);
+        setStatus("기기 사본이 더 최신 — [저장]을 누르면 서버에 반영", "warn");
+        return;
+      }
+      apply(remoteState);
+      saveLocal(remoteState);
+      setDirty(false);
+      setStatus(sha ? "불러옴 " + fmtTime(remoteState.updatedAt) : "저장된 내용 없음", "ok");
+    } catch (e) {
+      const bak = initial ? loadLocal() : null;
+      if (bak) { remoteState = bak; apply(bak); setDirty(false); }
+      setStatus("서버를 못 읽음 (" + e.message + ")" + (bak ? " — 기기 사본 표시" : ""), "off");
+    }
+  }
+
+  async function save() {
+    if (saving) return;
+    let token = getToken();
+    if (!token) { token = askToken(); if (!token) { setStatus("토큰이 없어 저장 못 함", "off"); return; } }
+
+    saving = true;
+    if (saveBtn) saveBtn.disabled = true;
+    setStatus("저장 중…", "busy");
+
+    const now = Date.now();
+    const mine = { updatedAt: now, by: me };
+    let state = Object.assign(currentState(), mine);
+    saveLocal(state);
+
+    try {
+      try {
+        sha = await ghWrite(state, sha, "체크리스트 저장 (" + me + ")");
+      } catch (e) {
+        if (e.status === 409 || e.status === 422) {          // 그사이 상대가 저장함 → 최신 위에 내 필드를 얹어 재시도
+          const r = await ghRead();
+          state = Object.assign({}, r.state, currentState(), mine);
+          sha = await ghWrite(state, r.sha, "체크리스트 저장 (" + me + ")");
+        } else throw e;
+      }
+      remoteState = state;
+      setDirty(false);
+      setStatus("저장됨 " + fmtTime(now), "ok");
+    } catch (e) {
+      if (e.status === 401 || e.status === 403) {
+        setStatus("토큰이 틀리거나 권한 없음", "off");
+        if (askToken("저장 실패 (" + e.message + "). 토큰을 다시 입력하세요.")) { saving = false; setDirty(true); return save(); }
+      } else {
+        setStatus("저장 실패 (" + e.message + ")", "off");
+      }
+      setDirty(true);
+    } finally {
+      saving = false;
+      if (saveBtn) saveBtn.disabled = !dirty;
+    }
+  }
+
+  function fmtTime(t) {
+    t = Number(t) || 0;
+    if (!t) return "";
+    const d = new Date(t), p = n => String(n).padStart(2, "0");
+    return p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  if (saveBtn) saveBtn.addEventListener("click", save);
+  document.getElementById("reloadbtn").addEventListener("click", () => {
+    if (dirty && !confirm("저장하지 않은 변경이 있습니다. 버리고 서버 내용을 다시 불러올까요?")) return;
+    load(false);
+  });
+  document.getElementById("tokenbtn").addEventListener("click", () => {
+    if (askToken()) bkMsg("토큰 저장됨 (이 기기)"); else bkMsg("토큰 지움", true);
+  });
+  window.addEventListener("beforeunload", e => {
+    if (!dirty) return;
+    e.preventDefault(); e.returnValue = "";
+  });
 
   /* 실측값 저장 · 삭제 */
 
@@ -1893,22 +1911,12 @@
   getBoxes().forEach(b => { b.checked = false; });
   recalc();
 
-  pull(true);
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) { pollMs = POLL_MIN; clearTimeout(pollTimer); pull(false); }
+  load(true);
+  document.addEventListener("visibilitychange", () => {      // 탭으로 돌아오면 상대가 저장한 내용을 받아온다
+    if (!document.hidden && !dirty && !saving) load(false);
   });
 
   /* ---------- 백업 내보내기 · 되돌리기 ---------- */
-
-  function currentState() {
-    return Object.assign({}, remoteState, {
-      checked: snapshot(),
-      values: snapshotValues(),
-      custom: customItems,
-      edits: edits,
-      removed: Array.from(removed)
-    });
-  }
 
   function bkMsg(text, warn) {
     const el = document.getElementById("bkmsg");
@@ -1969,9 +1977,9 @@
 
       remoteState = Object.assign({}, remoteState, s);
       apply(remoteState);
-      lastSeen = -1;
       bkMsg("되돌림 — 선택 " + n + "개");
-      sendNow(0);
+      setDirty(true);
+      save();
     };
 
     rd.onerror = () => bkMsg("파일을 읽지 못했습니다", true);

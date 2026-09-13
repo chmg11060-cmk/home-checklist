@@ -85,6 +85,11 @@
   .sync::before { content:""; display:inline-block; width:6px; height:6px; border-radius:50%; background: var(--ink-3); margin-right:5px; vertical-align:1px; }
   .sync.ok { color: var(--accent); } .sync.ok::before { background: var(--accent); }
   .sync.busy { color: var(--warn); } .sync.busy::before { background: var(--warn); }
+  .sync.warn { color: var(--warn); font-weight: 600; } .sync.warn::before { background: var(--warn); }
+
+  .savebtn { font-weight: 700; padding: 6px 16px; }
+  .savebtn:disabled { opacity: .45; cursor: default; }
+  .savebtn.dirty { background: var(--accent); color: var(--surface); border-color: var(--accent); }
 
   a.back {
     font-family: var(--font-sans); font-size: 13px; text-decoration: none;
@@ -174,7 +179,9 @@
       <span class="n" id="done">0</span>
       <span class="d" id="total">/ 0</span>
     </div>
-    <span class="sync" id="sync">연결 중…</span>
+    <span class="sync" id="sync">불러오는 중…</span>
+    <button class="tog savebtn" type="button" id="savebtn" disabled>저장</button>
+    <button class="tog" type="button" id="reloadbtn" title="서버에 저장된 최신 내용을 다시 불러옴">↻</button>
     <button class="tog" type="button" id="toggle">완료 숨기기</button>
     <a class="back" href="plan.html">조감도</a>
     <a class="back" href="index.html">← 금액 페이지</a>
@@ -423,15 +430,15 @@
   ];
 
 
-  /* 저장소 2곳에 같은 내용을 보관한다. 한 곳이 사라져도 나머지로 계속 동기화됨 */
-  const SYNC_URLS = [
-    "https://jsonblob.com/api/jsonBlob/019fefd4-8e6a-7b19-9d98-6a9ab8ed782d",    // 주
-    "https://jsonblob.com/api/jsonBlob/019feff0-0662-7dbd-87f8-c7a044fc2696"    // 보조
-  ];
-  const POLL_MIN = 15000, POLL_MAX = 90000;
-  const LOCAL_KEY = "hc_backup_v1";   // 서버 저장소가 사라져도 남는 기기 안 사본
+  /* ---------- GitHub 저장 (수동 저장) ----------
+     jsonblob 저장소가 두 번(2026-08-11, 09-14) 통째로 사라져 GitHub 저장소의 state.json 으로 옮김.
+     자동 동기화 없음 — [저장] 버튼을 눌러야 서버(GitHub)에 기록된다.
+     쓰기에는 GitHub 토큰이 필요하며 기기별로 한 번 입력해 localStorage 에 보관한다 (페이지 소스에는 없음). */
+  const GH_OWNER = "chmg11060-cmk", GH_REPO = "home-checklist", GH_PATH = "state.json", GH_BRANCH = "main";
+  const GH_API = "https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + GH_PATH;
+  const TOKEN_KEY = "hc_gh_token";
+  const LOCAL_KEY = "hc_backup_v1";   // 서버를 못 읽을 때 보여줄 기기 안 사본
 
-  /* 저장소가 통째로 사라진 적이 있어(2026-08-11) 기기에도 사본을 남긴다 */
   function saveLocal(state) {
     try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch (e) {}
   }
@@ -443,6 +450,49 @@
       return (s && typeof s === "object") ? s : null;
     } catch (e) { return null; }
   }
+  function getToken() { try { return (localStorage.getItem(TOKEN_KEY) || "").trim(); } catch (e) { return ""; } }
+  function askToken(msg) {
+    const v = prompt((msg ? msg + "\n\n" : "") +
+      "GitHub 토큰을 입력하세요 (이 기기에만 저장됨).\n" +
+      "github.com → Settings → Developer settings → Personal access tokens\n" +
+      "저장소 home-checklist 의 Contents: Read and write 권한", "");
+    if (v == null) return "";
+    const t = v.trim();
+    try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    return t;
+  }
+
+  /* UTF-8 ↔ base64 (GitHub Contents API 는 base64 본문을 주고받는다) */
+  const b64enc = s => btoa(unescape(encodeURIComponent(s)));
+  const b64dec = s => decodeURIComponent(escape(atob(s.replace(/\s/g, ""))));
+
+  function ghHeaders() {
+    const h = { "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+    const t = getToken();
+    if (t) h["Authorization"] = "Bearer " + t;
+    return h;
+  }
+
+  /* 서버의 state.json 을 읽는다. 없으면(404) 빈 상태 */
+  async function ghRead() {
+    const r = await fetch(GH_API + "?ref=" + GH_BRANCH + "&t=" + Date.now(), { headers: ghHeaders(), cache: "no-store" });
+    if (r.status === 404) return { sha: null, state: {} };
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    const s = JSON.parse(b64dec(j.content || "") || "{}");
+    return { sha: j.sha, state: (s && typeof s === "object") ? s : {} };
+  }
+
+  /* state.json 을 덮어쓴다. sha 가 어긋나면(상대가 그사이 저장) 409/422 */
+  async function ghWrite(state, sha, msg) {
+    const body = { message: msg, content: b64enc(JSON.stringify(state, null, 2)), branch: GH_BRANCH };
+    if (sha) body.sha = sha;
+    const r = await fetch(GH_API, { method: "PUT", headers: Object.assign(ghHeaders(), { "Content-Type": "application/json" }), body: JSON.stringify(body) });
+    if (r.ok) return (await r.json()).content.sha;
+    const err = new Error("HTTP " + r.status);
+    err.status = r.status;
+    throw err;
+  }
 
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
@@ -451,12 +501,12 @@
   const totalEl  = document.getElementById("total");
   const fillEl   = document.getElementById("fill");
   const syncEl   = document.getElementById("sync");
+  const saveBtn  = document.getElementById("savebtn");
 
   let remoteState = {};
   let bought = new Set();
   let rows = [];            // 화면에 표시할 항목 [{key,name,p}]
-  let lastSeen = -1, pollMs = POLL_MIN, pollTimer = null, pushTimer = null;
-  let suppress = false, pendingPush = false;
+  let sha = null, dirty = false, saving = false;
 
   const me = (() => {
     let v = null;
@@ -529,148 +579,107 @@
     this.textContent = document.body.classList.contains("hidedone") ? "완료 보이기" : "완료 숨기기";
   });
 
-  function schedulePoll() {
-    clearTimeout(pollTimer);
-    pollTimer = setTimeout(() => { document.hidden ? schedulePoll() : pull(false); }, pollMs);
-  }
-
-  /* 저장소 2곳을 동시에 읽는다 */
-  function readAll() {
-    return Promise.all(SYNC_URLS.map(async (u) => {
-      try {
-        const r = await fetch(u, { cache: "no-store" });
-        if (r.status === 429) return { u: u, limited: true };
-        if (!r.ok) return { u: u, dead: true };
-        const s = await r.json();
-        return (s && typeof s === "object") ? { u: u, state: s } : { u: u, dead: true };
-      } catch (e) {
-        return { u: u, dead: true };
-      }
-    }));
-  }
-
-  /* 뒤처진 저장소를 최신 내용으로 조용히 맞춘다 (updatedAt은 새로 찍지 않음) */
-  function healStores(state) {
-    const body = JSON.stringify(state);
-    SYNC_URLS.forEach(u => {
-      fetch(u, { method: "PUT", headers: { "Content-Type": "application/json" }, body: body }).catch(() => {});
-    });
-  }
-
   function showState(s) {
     bought = new Set(Array.isArray(s.bought) ? s.bought : []);
     rows = buildRows(s);
     render();
   }
 
-  async function pull(initial) {
-    const res = await readAll();
-    const live = res.filter(x => x.state);
+  function setDirty(on) {
+    dirty = on;
+    saveBtn.disabled = !on || saving;
+    saveBtn.classList.toggle("dirty", on);
+    if (on) setSync("저장 안 됨", "warn");
+  }
 
-    if (!live.length) {                             // 두 곳 다 못 읽음
-      if (res.some(x => x.limited)) {
-        pollMs = Math.min(pollMs * 2, POLL_MAX);
-        setSync("동기화 지연 중", "busy");
-      } else {
-        const bak = initial ? loadLocal() : null;   // 서버가 죽어도 마지막 상태는 보여준다
-        if (bak) {
-          remoteState = bak;
-          showState(bak);
-          setSync("오프라인 — 기기 사본", "");
-        } else {
-          setSync("오프라인", "");
-        }
+  /* 체크를 바꾸면 곧바로 서버에 보내지 않고 "저장 안 됨" 표시만 한다 */
+  function push() { setDirty(true); }
+
+  function fmtTime(t) {
+    t = Number(t) || 0;
+    if (!t) return "";
+    const d = new Date(t), p = n => String(n).padStart(2, "0");
+    return p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  async function load(initial) {
+    setSync("불러오는 중…", "busy");
+    try {
+      const r = await ghRead();
+      sha = r.sha;
+      remoteState = r.state;
+      // 기기 사본이 서버보다 최신(서버가 비었거나 되돌아간 경우) → 사본을 보여주고 저장을 권한다
+      const bak = initial ? loadLocal() : null;
+      if (bak && (Number(bak.updatedAt) || 0) > (Number(remoteState.updatedAt) || 0)) {
+        remoteState = Object.assign({}, remoteState, bak);
+        showState(remoteState);
+        setDirty(true);
+        setSync("기기 사본이 더 최신 — [저장] 필요", "warn");
+        return;
       }
-      schedulePoll();
-      return;
-    }
-
-    pollMs = POLL_MIN;
-
-    let best = live[0];                             // 살아있는 곳 중 가장 최신 내용을 쓴다
-    live.forEach(x => {
-      if ((Number(x.state.updatedAt) || 0) > (Number(best.state.updatedAt) || 0)) best = x;
-    });
-    const s = best.state;
-    const t = Number(s.updatedAt) || 0;
-    const dead = res.length - live.length;
-    const tail = dead ? " (저장소 " + dead + "곳 응답 없음)" : "";
-
-    // 기기 사본이 더 최신 → 저장소가 비워졌던 것이므로 사본으로 되살린다
-    const bak = initial ? loadLocal() : null;
-    if (bak && (Number(bak.updatedAt) || 0) > t) {
-      remoteState = Object.assign({}, s, bak);
       showState(remoteState);
-      lastSeen = -1;
-      setSync("기기 사본으로 복구 중…", "busy");
-      send(0);
-      schedulePoll();
-      return;
+      saveLocal(remoteState);
+      setDirty(false);
+      setSync(sha ? "불러옴 " + fmtTime(remoteState.updatedAt) : "저장된 내용 없음", "ok");
+    } catch (e) {
+      const bak = initial ? loadLocal() : null;
+      if (bak) { remoteState = bak; showState(bak); setDirty(false); }
+      setSync("서버를 못 읽음" + (bak ? " — 기기 사본" : ""), "");
     }
-
-    remoteState = s;
-
-    if (live.some(x => (Number(x.state.updatedAt) || 0) < t)) healStores(s);
-
-    if (initial || t > lastSeen) {
-      lastSeen = t;
-      showState(s);
-      saveLocal(s);
-      setSync((initial ? "연결됨" : (s.by === me ? "동기화됨" : "상대방이 변경함")) + tail, dead ? "busy" : "ok");
-    } else {
-      setSync("연결됨" + tail, dead ? "busy" : "ok");
-    }
-
-    if (pendingPush) { pendingPush = false; push(); }
-    schedulePoll();
   }
 
-  function push() {
-    if (suppress) return;
+  async function save() {
+    if (saving) return;
+    let token = getToken();
+    if (!token) { token = askToken(); if (!token) { setSync("토큰이 없어 저장 못 함", ""); return; } }
+
+    saving = true;
+    saveBtn.disabled = true;
     setSync("저장 중…", "busy");
-    clearTimeout(pushTimer);
-    pushTimer = setTimeout(() => send(0), 600);
-  }
 
-  async function send(attempt) {
     const now = Date.now();
-    const state = Object.assign({}, remoteState, {
-      bought: Array.from(bought), updatedAt: now, by: me
-    });
-    saveLocal(state);                               // 보내기 전에 기기에 먼저 남긴다
+    const mine = { bought: Array.from(bought), updatedAt: now, by: me };
+    let state = Object.assign({}, remoteState, mine);
+    saveLocal(state);
 
-    const body = JSON.stringify(state);
-    const results = await Promise.all(SYNC_URLS.map(async (u) => {   // 두 곳 모두에 저장
+    try {
       try {
-        const r = await fetch(u, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: body
-        });
-        return r.status === 429 ? "limited" : (r.ok ? "ok" : "fail");
+        sha = await ghWrite(state, sha, "구매 체크 저장 (" + me + ")");
       } catch (e) {
-        return "fail";
+        if (e.status === 409 || e.status === 422) {          // 그사이 상대가 저장함 → 최신 위에 bought 만 얹어 재시도
+          const r = await ghRead();
+          state = Object.assign({}, r.state, mine);
+          sha = await ghWrite(state, r.sha, "구매 체크 저장 (" + me + ")");
+          rows = buildRows(state);                            // 상대가 고른 항목 변화도 반영
+        } else throw e;
       }
-    }));
-
-    const okCount = results.filter(x => x === "ok").length;
-
-    if (!okCount) {                                 // 한 곳도 저장 못 함
-      if (results.indexOf("limited") >= 0 && attempt < 4) {
-        const w = Math.min(4000 * Math.pow(2, attempt), 60000);
-        setSync("저장 대기 (" + Math.round(w/1000) + "초)", "busy");
-        setTimeout(() => send(attempt + 1), w);
+      remoteState = state;
+      render();
+      setDirty(false);
+      setSync("저장됨 " + fmtTime(now), "ok");
+    } catch (e) {
+      if (e.status === 401 || e.status === 403) {
+        setSync("토큰 오류", "");
+        if (askToken("저장 실패 (" + e.message + "). 토큰을 다시 입력하세요.")) { saving = false; setDirty(true); return save(); }
       } else {
-        pendingPush = true;
-        setSync("저장 실패 — 재시도 예약", "");
+        setSync("저장 실패 (" + e.message + ")", "");
       }
-      return;
+      setDirty(true);
+    } finally {
+      saving = false;
+      saveBtn.disabled = !dirty;
     }
-
-    lastSeen = now;
-    remoteState = state;
-    setSync(okCount === SYNC_URLS.length ? "저장됨" : "저장됨 (저장소 1곳 응답 없음)", "ok");
   }
+
+  saveBtn.addEventListener("click", save);
+  document.getElementById("reloadbtn").addEventListener("click", () => {
+    if (dirty && !confirm("저장하지 않은 변경이 있습니다. 버리고 서버 내용을 다시 불러올까요?")) return;
+    load(false);
+  });
+  window.addEventListener("beforeunload", e => {
+    if (!dirty) return;
+    e.preventDefault(); e.returnValue = "";
+  });
 
   /* 스크립트가 죽으면 빈 화면 대신 원인을 보여준다 */
   window.addEventListener("error", e => {
@@ -684,9 +693,9 @@
   }
 
   render();
-  pull(true);
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) { pollMs = POLL_MIN; clearTimeout(pollTimer); pull(false); }
+  load(true);
+  document.addEventListener("visibilitychange", () => {      // 탭으로 돌아오면 상대가 저장한 내용을 받아온다
+    if (!document.hidden && !dirty && !saving) load(false);
   });
 
   /* 모바일에서 스크롤을 내리면 상단 바를 접는다 (맨 위 근처로 돌아오면 다시 펼침) */
