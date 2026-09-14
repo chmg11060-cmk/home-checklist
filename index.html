@@ -809,6 +809,10 @@
     .tl-step { grid-template-columns: 1fr; }
     .tl-detail { grid-column: 1; }
     .total-figure .num { font-size: 23px; }
+    /* 상태 문구가 길어도 가로 스크롤이 생기지 않게: 둘째 줄로 내려 줄바꿈 */
+    .total-figure { flex-wrap: wrap; row-gap: 6px; }
+    .syncstate { flex: 1 1 55%; min-width: 0; white-space: normal; line-height: 1.3; padding-left: 0; border-left: 0; margin-left: 0; }
+    .savegroup { margin-left: auto; }
   }
 
   /* 모바일: 아래로 스크롤하면 상단 바를 접어 화면을 넓게 쓴다. 위로 올리면 다시 펼쳐짐 */
@@ -1770,7 +1774,7 @@
   function setDirty(on) {
     dirty = on;
     if (saveBtn) { saveBtn.disabled = !on || saving; saveBtn.classList.toggle("dirty", on); }
-    if (on) setStatus("저장 안 됨 — [저장]을 누르세요", "warn");
+    if (on) setStatus("저장 안 됨", "warn");
   }
 
   /* 항목을 바꾸면 곧바로 서버에 보내지 않고 "저장 안 됨" 표시만 한다 */
@@ -1791,7 +1795,7 @@
         remoteState = Object.assign({}, remoteState, bak);
         apply(remoteState);
         setDirty(true);
-        setStatus("기기 사본이 더 최신 — [저장]을 누르면 서버에 반영", "warn");
+        setStatus("기기 사본 표시 — 저장 필요", "warn");
         return;
       }
       apply(remoteState);
@@ -1801,14 +1805,14 @@
     } catch (e) {
       const bak = initial ? loadLocal() : null;
       if (bak) { remoteState = bak; apply(bak); setDirty(false); }
-      setStatus("서버를 못 읽음 (" + e.message + ")" + (bak ? " — 기기 사본 표시" : ""), "off");
+      setStatus("서버 못 읽음" + (bak ? " — 기기 사본" : ""), "off");
     }
   }
 
   async function save() {
     if (saving) return;
     let token = getToken();
-    if (!token) { token = askToken(); if (!token) { setStatus("토큰이 없어 저장 못 함", "off"); return; } }
+    if (!token) { token = askToken(); if (!token) { setStatus("토큰 없음 — 저장 안 됨", "off"); return; } }
 
     saving = true;
     if (saveBtn) saveBtn.disabled = true;
@@ -1834,10 +1838,10 @@
       setStatus("저장됨 " + fmtTime(now), "ok");
     } catch (e) {
       if (e.status === 401 || e.status === 403) {
-        setStatus("토큰이 틀리거나 권한 없음", "off");
+        setStatus("토큰 오류", "off");
         if (askToken("저장 실패 (" + e.message + "). 토큰을 다시 입력하세요.")) { saving = false; setDirty(true); return save(); }
       } else {
-        setStatus("저장 실패 (" + e.message + ")", "off");
+        setStatus("저장 실패 " + e.message, "off");
       }
       setDirty(true);
     } finally {
@@ -1850,7 +1854,7 @@
     t = Number(t) || 0;
     if (!t) return "";
     const d = new Date(t), p = n => String(n).padStart(2, "0");
-    return p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+    return (d.getMonth() + 1) + "/" + d.getDate() + " " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
 
   if (saveBtn) saveBtn.addEventListener("click", save);

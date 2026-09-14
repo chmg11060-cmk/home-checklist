@@ -154,10 +154,12 @@
 
   /* 모바일: 아래로 스크롤하면 상단 바를 접어 화면을 넓게 쓴다. 위로 올리면 다시 펼쳐짐 */
   @media (max-width: 620px) {
+    .sync { white-space: normal; line-height: 1.3; flex: 1 1 40%; min-width: 0; }   /* 문구가 길어도 가로 스크롤 없이 줄바꿈 */
     .bar { transition: padding .18s ease, gap .18s ease; }
     body.barmini .bar { padding: 7px 14px; gap: 6px 12px; }
-    body.barmini .bar .tog,
+    body.barmini .bar .tog:not(.savebtn),   /* 접혀도 저장 버튼은 남긴다 */
     body.barmini .bar a.back { display: none; }
+    body.barmini .savebtn { padding: 4px 12px; font-size: 12px; }
     body.barmini .prog .n { font-size: 18px; }
     body.barmini .prog .d { font-size: 12px; }
   }
@@ -599,7 +601,7 @@
     t = Number(t) || 0;
     if (!t) return "";
     const d = new Date(t), p = n => String(n).padStart(2, "0");
-    return p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+    return (d.getMonth() + 1) + "/" + d.getDate() + " " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
 
   async function load(initial) {
@@ -614,7 +616,7 @@
         remoteState = Object.assign({}, remoteState, bak);
         showState(remoteState);
         setDirty(true);
-        setSync("기기 사본이 더 최신 — [저장] 필요", "warn");
+        setSync("기기 사본 — 저장 필요", "warn");
         return;
       }
       showState(remoteState);
@@ -631,7 +633,7 @@
   async function save() {
     if (saving) return;
     let token = getToken();
-    if (!token) { token = askToken(); if (!token) { setSync("토큰이 없어 저장 못 함", ""); return; } }
+    if (!token) { token = askToken(); if (!token) { setSync("토큰 없음", ""); return; } }
 
     saving = true;
     saveBtn.disabled = true;
@@ -662,7 +664,7 @@
         setSync("토큰 오류", "");
         if (askToken("저장 실패 (" + e.message + "). 토큰을 다시 입력하세요.")) { saving = false; setDirty(true); return save(); }
       } else {
-        setSync("저장 실패 (" + e.message + ")", "");
+        setSync("저장 실패 " + e.message, "");
       }
       setDirty(true);
     } finally {
