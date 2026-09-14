@@ -404,12 +404,15 @@
     .rowwrap:hover .editbtn, .editbtn:focus-visible { opacity: 1; }
   }
 
-  /* 편집 중 「수정」 자리에 나타나는 저장 버튼 — 항상 보이고 강조 */
-  .editbtn.ef-save, .rowwrap:hover .editbtn.ef-save {
-    opacity: 1; font-weight: 700;
-    background: var(--accent); color: var(--surface); border-color: var(--accent);
+  /* 편집 중 「수정」 옆에 나타나는 저장 버튼 */
+  .r-act { display: inline-flex; gap: 6px; }
+  .rowsave {
+    font-family: var(--font-sans); font-size: 12px; font-weight: 700;
+    background: var(--accent); color: var(--surface); border: 1px solid var(--accent);
+    border-radius: 6px; padding: 4px 10px; cursor: pointer; white-space: nowrap;
   }
-  .editbtn.ef-save:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+  .rowsave:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+  .rowwrap:has(.rowsave:not([hidden])) .editbtn { opacity: 1; }
 
   .editform {
     display: flex;
@@ -538,13 +541,6 @@
   .af-spec { flex: 3 1 240px; }
   .af-cost { flex: 0 1 120px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .af-p    { flex: 0 1 130px; cursor: pointer; }
-
-  .rowwrap.custom .r-name::before {
-    content: "＋";
-    color: var(--accent);
-    font-weight: 700;
-    margin-right: 2px;
-  }
 
   @media (max-width: 620px) {
     .addwrap { padding-left: 16px; padding-right: 16px; }
@@ -1170,7 +1166,8 @@
   }
 
   function editBtnHtml(raw) {
-    return '<button type="button" class="editbtn" data-edit="' + esc(raw) + '" title="수정·삭제">수정</button>';
+    return '<button type="button" class="editbtn" data-edit="' + esc(raw) + '" title="수정·삭제">수정</button>' +
+           '<button type="button" class="rowsave" hidden>저장</button>';
   }
 
   function editFormHtml(it, kind) {
@@ -1430,9 +1427,9 @@
       const slot = wrap.querySelector(".editslot");
       slot.innerHTML = editFormHtml(it, isCustom ? "custom" : "base");
       slot.dataset.key = raw;
-      // 저장 버튼은 폼 아래가 아니라 「수정」 버튼 자리에 둔다 (모바일에서 스크롤 없이 누르도록)
-      document.querySelectorAll(".r-act .ef-save").forEach(b => { b.outerHTML = editBtnHtml(b.dataset.edit); });
-      ed.outerHTML = '<button type="button" class="editbtn ef-save" data-edit="' + esc(raw) + '">저장</button>';
+      // 저장 버튼은 폼 아래가 아니라 「수정」 옆에 둔다 (모바일에서 스크롤 없이 누르도록)
+      document.querySelectorAll(".rowsave").forEach(b => { b.hidden = true; });
+      wrap.querySelector(".rowsave").hidden = false;
       slot.querySelector(".ef-name").focus();
       return;
     }
@@ -1441,12 +1438,11 @@
     if (cancel2) {
       const wrap = cancel2.closest(".rowwrap");
       wrap.querySelector(".editslot").innerHTML = "";
-      const sb = wrap.querySelector(".r-act .ef-save");
-      if (sb) sb.outerHTML = editBtnHtml(sb.dataset.edit);
+      wrap.querySelector(".rowsave").hidden = true;
       return;
     }
 
-    const save2 = e.target.closest(".ef-save");
+    const save2 = e.target.closest(".rowsave");
     if (save2) {
       const slot = save2.closest(".rowwrap").querySelector(".editslot");
       const raw = slot.dataset.key;
