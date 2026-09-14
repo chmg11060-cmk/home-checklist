@@ -1,3 +1,22 @@
+    // 금액 페이지와 같은 순서: 섹션 순서대로, 각 섹션의 기본 항목 뒤에 그 섹션에서 추가한 항목
+    const pushCustom = c => {
+      if (!picked.has("c:" + c.id)) return;
+      out.push({ key: "c:" + c.id, name: c.name, p: c.p });
+    };
+
+    SECTIONS.forEach((sec, si) => {
+      sec.items.forEach(base => {
+        if (removed.has(base.name)) return;
+        if (!picked.has(base.name)) return;
+        if (base.m) return;                       // 실측 항목은 구매 대상이 아님
+        const ov = edits[base.name] || {};
+        out.push({ key: base.name, name: ov.name != null ? ov.name : base.name, p: ov.p != null ? ov.p : base.p });
+      });
+      custom.filter(c => Number(c.sec) === si).forEach(pushCustom);
+    });
+
+    // 섹션 정보가 없는 추가 항목은 맨 뒤
+    custom.filter(c => !(Number(c.sec) >= 0 && Number(c.sec) < SECTIONS.length)).forEach(pushCustom);
 <!doctype html>
 <html lang="ko">
 <head>
